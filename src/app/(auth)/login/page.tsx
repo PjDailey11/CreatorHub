@@ -40,6 +40,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [resendingConfirmation, setResendingConfirmation] = useState(false)
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
     text: string
@@ -64,6 +66,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
+    setUnconfirmedEmail(null)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -71,19 +74,57 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setMessage({
-        type: 'error',
-        text:
-          error.message === 'Invalid login credentials'
-            ? 'Wrong email or password. If you just signed up, check your email and confirm first.'
-            : error.message,
-      })
+      const lower = error.message.toLowerCase()
+      // Specific case: account exists but email isn't confirmed
+      if (lower.includes('email not confirmed') || lower.includes('not confirmed')) {
+        setUnconfirmedEmail(email)
+        setMessage({
+          type: 'error',
+          text:
+            'Your email isn\u2019t confirmed yet. Click the link we sent you, or resend it below.',
+        })
+      } else if (lower.includes('invalid login credentials')) {
+        setMessage({
+          type: 'error',
+          text:
+            'Wrong email or password. If you originally signed up with Google, use the Google button below or reset your password to set one.',
+        })
+      } else {
+        setMessage({ type: 'error', text: error.message })
+      }
       setLoading(false)
       return
     }
 
     router.push('/dashboard')
     router.refresh()
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return
+    setResendingConfirmation(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: unconfirmedEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
+    })
+    if (error) {
+      setMessage({
+        type: 'error',
+        text:
+          error.status === 429
+            ? 'Too many requests. Wait a minute before resending.'
+            : error.message,
+      })
+    } else {
+      setMessage({
+        type: 'success',
+        text: 'Confirmation email sent. Check your inbox (and spam folder).',
+      })
+    }
+    setResendingConfirmation(false)
   }
 
   const handleMagicLink = async (e: React.FormEvent) => {
@@ -176,16 +217,12 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('magic')
-                    setMessage(null)
-                  }}
+                <Link
+                  href="/forgot-password"
                   className="text-xs text-pink-500 hover:text-pink-600 font-medium"
                 >
-                  Use magic link instead
-                </button>
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Input
@@ -231,6 +268,22 @@ export default function LoginPage() {
             </div>
           )}
 
+          {mode === 'password' && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('magic')
+                  setMessage(null)
+                  setUnconfirmedEmail(null)
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Or sign in with a magic link instead
+              </button>
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
@@ -255,6 +308,20 @@ export default function LoginPage() {
           >
             {message.text}
           </p>
+        )}
+
+        {unconfirmedEmail && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleResendConfirmation}
+            disabled={resendingConfirmation}
+          >
+            {resendingConfirmation
+              ? 'Sending...'
+              : 'Resend confirmation email'}
+          </Button>
         )}
 
         <div className="relative">

@@ -30,6 +30,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [alreadyExists, setAlreadyExists] = useState(false)
   const [message, setMessage] = useState<{
     type: 'success' | 'error' | 'info'
     text: string
@@ -63,14 +64,31 @@ export default function SignupPage() {
     })
 
     if (error) {
-      const friendly =
-        error.message.toLowerCase().includes('already registered') ||
-        error.message.toLowerCase().includes('already exists')
-          ? 'That email is already registered. Try signing in instead.'
-          : error.status === 429
-            ? 'Too many signup attempts. Wait a minute and try again.'
-            : error.message
+      const lower = error.message.toLowerCase()
+      const isAlreadyExists =
+        lower.includes('already registered') ||
+        lower.includes('already exists') ||
+        lower.includes('user already')
+      const friendly = isAlreadyExists
+        ? 'That email is already registered. Sign in below, or reset your password if you originally signed up with Google.'
+        : error.status === 429
+          ? 'Too many signup attempts. Wait a minute and try again.'
+          : error.message
+      setAlreadyExists(isAlreadyExists)
       setMessage({ type: 'error', text: friendly })
+      setLoading(false)
+      return
+    }
+
+    // Supabase quirk: if a user with that email already exists, signUp may
+    // return data without an error. The identities array is empty in that case.
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setAlreadyExists(true)
+      setMessage({
+        type: 'error',
+        text:
+          'That email is already registered. Sign in below, or reset your password if you originally signed up with Google.',
+      })
       setLoading(false)
       return
     }
@@ -238,6 +256,25 @@ export default function SignupPage() {
           >
             {message.text}
           </p>
+        )}
+
+        {alreadyExists && (
+          <div className="flex flex-col gap-2">
+            <Link href="/login" className="w-full">
+              <Button type="button" variant="outline" className="w-full">
+                Go to sign in
+              </Button>
+            </Link>
+            <Link href="/forgot-password" className="w-full">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-pink-500 hover:text-pink-600"
+              >
+                Reset password
+              </Button>
+            </Link>
+          </div>
         )}
 
         <div className="relative">
