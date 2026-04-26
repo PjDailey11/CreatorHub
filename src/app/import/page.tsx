@@ -222,7 +222,7 @@ export default function ImportSubscribersPage() {
     setFile(f)
   }, [])
 
-  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+  const onDrop = (e: DragEvent<HTMLLabelElement>) => {
     e.preventDefault()
     setIsDragging(false)
     const f = e.dataTransfer.files?.[0]
@@ -557,7 +557,7 @@ function UploadStep({
   isDragging: boolean
   onDragEnter: () => void
   onDragLeave: () => void
-  onDrop: (e: DragEvent<HTMLDivElement>) => void
+  onDrop: (e: DragEvent<HTMLLabelElement>) => void
   onFileInput: (e: ChangeEvent<HTMLInputElement>) => void
   onRemove: () => void
 }) {
