@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 type Mode = 'password' | 'magic'
 
@@ -45,19 +46,28 @@ export default function LoginPage() {
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
     text: string
+    detail?: string
   } | null>(null)
+
+  // Pre-fill email from ?email=... (e.g. when redirected from /signup)
+  useEffect(() => {
+    const prefill = searchParams.get('email')
+    if (prefill) setEmail(prefill)
+  }, [searchParams])
 
   // Surface errors that the OAuth callback redirected back with
   useEffect(() => {
     const err = searchParams.get('error')
     const description = searchParams.get('error_description')
     if (err) {
+      console.log('[v0] Login received callback error:', { err, description })
       setMessage({
         type: 'error',
         text:
           description ||
           ERROR_MESSAGES[err] ||
           `Sign-in failed (${err}). Please try again.`,
+        detail: description ? `code: ${err}` : undefined,
       })
     }
   }, [searchParams])
@@ -74,23 +84,43 @@ export default function LoginPage() {
     })
 
     if (error) {
+      console.log('[v0] signInWithPassword failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
       const lower = error.message.toLowerCase()
+      const statusDetail =
+        (error as { code?: string }).code || error.status
+          ? `${(error as { code?: string }).code ?? ''}${
+              error.status ? ` \u00b7 status ${error.status}` : ''
+            }`.trim()
+          : undefined
+
       // Specific case: account exists but email isn't confirmed
-      if (lower.includes('email not confirmed') || lower.includes('not confirmed')) {
+      if (
+        lower.includes('email not confirmed') ||
+        lower.includes('not confirmed')
+      ) {
         setUnconfirmedEmail(email)
         setMessage({
           type: 'error',
           text:
-            'Your email isn\u2019t confirmed yet. Click the link we sent you, or resend it below.',
+            'Please verify your email \u2014 check your inbox or click \u201cResend\u201d below.',
+          detail: statusDetail,
         })
       } else if (lower.includes('invalid login credentials')) {
         setMessage({
           type: 'error',
-          text:
-            'Wrong email or password. If you originally signed up with Google, use the Google button below or reset your password to set one.',
+          text: 'Email or password is incorrect.',
+          detail: statusDetail,
         })
       } else {
-        setMessage({ type: 'error', text: error.message })
+        setMessage({
+          type: 'error',
+          text: error.message,
+          detail: statusDetail,
+        })
       }
       setLoading(false)
       return
@@ -111,18 +141,20 @@ export default function LoginPage() {
       },
     })
     if (error) {
-      setMessage({
-        type: 'error',
-        text:
-          error.status === 429
-            ? 'Too many requests. Wait a minute before resending.'
-            : error.message,
+      console.log('[v0] resend confirmation failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
       })
+      toast.error(
+        error.status === 429
+          ? 'Too many requests. Wait a minute before resending.'
+          : error.message,
+      )
     } else {
-      setMessage({
-        type: 'success',
-        text: 'Confirmation email sent. Check your inbox (and spam folder).',
-      })
+      toast.success(
+        'Confirmation email sent. Check your inbox (and spam folder).',
+      )
     }
     setResendingConfirmation(false)
   }
@@ -140,18 +172,21 @@ export default function LoginPage() {
     })
 
     if (error) {
+      console.log('[v0] signInWithOtp failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
       setMessage({
         type: 'error',
         text:
           error.status === 429
             ? 'Too many magic-link requests. Wait a minute and try again, or use email + password.'
             : error.message,
+        detail: error.status ? `status ${error.status}` : undefined,
       })
     } else {
-      setMessage({
-        type: 'success',
-        text: 'Check your email for the magic link.',
-      })
+      toast.success('Check your email for the magic link.')
     }
     setLoading(false)
   }
@@ -168,9 +203,15 @@ export default function LoginPage() {
     })
 
     if (error) {
+      console.log('[v0] signInWithOAuth(google) failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
       setMessage({
         type: 'error',
         text: `Google sign-in failed: ${error.message}. Make sure Google is enabled in your Supabase project (Authentication \u2192 Providers).`,
+        detail: error.status ? `status ${error.status}` : undefined,
       })
       setGoogleLoading(false)
       return
@@ -178,6 +219,7 @@ export default function LoginPage() {
 
     // signInWithOAuth normally redirects; if it didn't, surface that too
     if (!data?.url) {
+      console.log('[v0] signInWithOAuth(google) returned no redirect URL')
       setMessage({
         type: 'error',
         text:
@@ -196,6 +238,29 @@ export default function LoginPage() {
         <CardDescription>Sign in to your CreatorHub account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {message && (
+          <div
+            role={message.type === 'error' ? 'alert' : 'status'}
+            className={`flex items-start gap-2 rounded-md border p-3 text-sm ${
+              message.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200'
+                : 'border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'
+            }`}
+          >
+            {message.type === 'error' && (
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            )}
+            <div className="space-y-0.5">
+              <p className="font-medium leading-snug">{message.text}</p>
+              {message.detail && (
+                <p className="text-xs text-muted-foreground">
+                  {message.detail}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         <form
           onSubmit={mode === 'password' ? handlePasswordLogin : handleMagicLink}
           className="space-y-4"
@@ -298,17 +363,6 @@ export default function LoginPage() {
                 : 'Send magic link'}
           </Button>
         </form>
-
-        {message && (
-          <p
-            className={`text-sm text-center ${
-              message.type === 'error' ? 'text-red-500' : 'text-green-500'
-            }`}
-            role={message.type === 'error' ? 'alert' : 'status'}
-          >
-            {message.text}
-          </p>
-        )}
 
         {unconfirmedEmail && (
           <Button

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -34,6 +34,7 @@ export default function SignupPage() {
   const [message, setMessage] = useState<{
     type: 'success' | 'error' | 'info'
     text: string
+    detail?: string
   } | null>(null)
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -64,18 +65,29 @@ export default function SignupPage() {
     })
 
     if (error) {
+      console.log('[v0] signUp failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
       const lower = error.message.toLowerCase()
       const isAlreadyExists =
         lower.includes('already registered') ||
         lower.includes('already exists') ||
         lower.includes('user already')
+      const statusDetail =
+        (error as { code?: string }).code || error.status
+          ? `${(error as { code?: string }).code ?? ''}${
+              error.status ? ` \u00b7 status ${error.status}` : ''
+            }`.trim()
+          : undefined
       const friendly = isAlreadyExists
-        ? 'That email is already registered. Sign in below, or reset your password if you originally signed up with Google.'
+        ? 'This email is already in use. Try signing in instead.'
         : error.status === 429
           ? 'Too many signup attempts. Wait a minute and try again.'
           : error.message
       setAlreadyExists(isAlreadyExists)
-      setMessage({ type: 'error', text: friendly })
+      setMessage({ type: 'error', text: friendly, detail: statusDetail })
       setLoading(false)
       return
     }
@@ -83,11 +95,14 @@ export default function SignupPage() {
     // Supabase quirk: if a user with that email already exists, signUp may
     // return data without an error. The identities array is empty in that case.
     if (data.user && data.user.identities && data.user.identities.length === 0) {
+      console.log(
+        '[v0] signUp returned empty identities array (existing email):',
+        data.user.email,
+      )
       setAlreadyExists(true)
       setMessage({
         type: 'error',
-        text:
-          'That email is already registered. Sign in below, or reset your password if you originally signed up with Google.',
+        text: 'This email is already in use. Try signing in instead.',
       })
       setLoading(false)
       return
@@ -120,15 +135,24 @@ export default function SignupPage() {
     })
 
     if (error) {
+      console.log('[v0] signInWithOAuth(google) failed on signup:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
       setMessage({
         type: 'error',
         text: `Google sign-up failed: ${error.message}. Make sure Google is enabled in your Supabase project (Authentication \u2192 Providers).`,
+        detail: error.status ? `status ${error.status}` : undefined,
       })
       setGoogleLoading(false)
       return
     }
 
     if (!data?.url) {
+      console.log(
+        '[v0] signInWithOAuth(google) on signup returned no redirect URL',
+      )
       setMessage({
         type: 'error',
         text:
@@ -149,6 +173,31 @@ export default function SignupPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {message && (
+          <div
+            role={message.type === 'error' ? 'alert' : 'status'}
+            className={`flex items-start gap-2 rounded-md border p-3 text-sm ${
+              message.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200'
+                : message.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'
+                  : 'border-border bg-muted text-foreground'
+            }`}
+          >
+            {message.type === 'error' && (
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            )}
+            <div className="space-y-0.5">
+              <p className="font-medium leading-snug">{message.text}</p>
+              {message.detail && (
+                <p className="text-xs text-muted-foreground">
+                  {message.detail}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
@@ -243,24 +292,12 @@ export default function SignupPage() {
           </Button>
         </form>
 
-        {message && (
-          <p
-            className={`text-sm text-center ${
-              message.type === 'error'
-                ? 'text-red-500'
-                : message.type === 'success'
-                  ? 'text-green-500'
-                  : 'text-muted-foreground'
-            }`}
-            role={message.type === 'error' ? 'alert' : 'status'}
-          >
-            {message.text}
-          </p>
-        )}
-
         {alreadyExists && (
           <div className="flex flex-col gap-2">
-            <Link href="/login" className="w-full">
+            <Link
+              href={`/login?email=${encodeURIComponent(email)}`}
+              className="w-full"
+            >
               <Button type="button" variant="outline" className="w-full">
                 Go to sign in
               </Button>

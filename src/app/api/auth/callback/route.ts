@@ -10,6 +10,10 @@ export async function GET(request: Request) {
   const oauthError = searchParams.get('error')
   const oauthErrorDescription = searchParams.get('error_description')
   if (oauthError) {
+    console.log('[v0] auth callback received provider error:', {
+      error: oauthError,
+      description: oauthErrorDescription,
+    })
     const params = new URLSearchParams({
       error: oauthError,
       ...(oauthErrorDescription
@@ -36,6 +40,12 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log('[v0] exchangeCodeForSession failed:', {
+      message: error.message,
+      status: error.status,
+      code: (error as { code?: string }).code,
+      name: error.name,
+    })
     const params = new URLSearchParams({
       error: 'auth_callback_error',
       error_description: error.message,
@@ -43,6 +53,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?${params.toString()}`)
   }
 
+  console.log('[v0] auth callback hit with neither code nor provider error')
   return NextResponse.redirect(
     `${origin}/login?error=auth_callback_error&error_description=${encodeURIComponent(
       'No authorization code returned from provider.',
