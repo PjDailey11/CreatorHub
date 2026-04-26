@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -30,7 +30,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     'This preview URL isn\u2019t in the Supabase allowed redirect list. Add it under Authentication \u2192 URL Configuration.',
 }
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -429,5 +429,24 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+            <CardDescription className="text-center">
+              Loading…
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
   )
 }
