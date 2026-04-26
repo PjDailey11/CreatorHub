@@ -17,11 +17,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-950 text-zinc-300">
       <Sidebar />
       <div className="lg:pl-64">
-        <main className="py-6 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-6">
-          {children}
+        <main className="px-4 py-6 pt-20 md:px-6 md:py-8 lg:pt-8">
+          <div className="animate-in fade-in duration-300">{children}</div>
         </main>
       </div>
     </div>
