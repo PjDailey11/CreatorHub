@@ -2,6 +2,7 @@
 
 import { useSubscribers } from '@/hooks/use-subscribers'
 import { StatsCards } from '@/components/dashboard/stats-cards'
+import { RevenueTrend } from '@/components/dashboard/revenue-trend'
 import { SubscriberTable } from '@/components/dashboard/subscriber-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,8 @@ export default function DashboardPage() {
       </div>
 
       <StatsCards stats={stats} loading={loading} />
+
+      <RevenueTrend />
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
