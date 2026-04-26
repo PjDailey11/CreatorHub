@@ -1,5 +1,0 @@
-fix: revert to proxy.ts per Next.js 16 convention
-
-Next.js 16 deprecated the `middleware.ts` convention in favor of `proxy.ts`
-exporting `proxy()`. Reverts the previous incorrect rename by running the
-official `@next/codemod middleware-to-proxy` migration.
