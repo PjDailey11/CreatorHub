@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, type DragEvent, type ChangeEvent } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -12,14 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,6 +23,7 @@ import {
   AlertTriangle,
   Users,
   XCircle,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -111,8 +103,8 @@ function autoDetectField(header: string): FieldKey {
 }
 
 type RowIssue = {
-  rowIndex: number // 0-based index into MOCK_ROWS
-  rowNumber: number // human-friendly (1-based, accounting for header)
+  rowIndex: number
+  rowNumber: number
   severity: 'warning' | 'skip'
   messages: string[]
 }
@@ -129,7 +121,6 @@ function validateRows(
     const messages: string[] = []
     let hasCritical = false
 
-    // Check required: subscriber_name
     const nameColIndex = Object.entries(mapping).find(([, v]) => v === 'subscriber_name')?.[0]
     if (nameColIndex !== undefined) {
       if (!row[Number(nameColIndex)]?.trim()) {
@@ -137,7 +128,6 @@ function validateRows(
         hasCritical = true
       }
     } else {
-      // No mapping at all for name -> skipped at row level (per row)
       messages.push('No column mapped to subscriber_name')
       hasCritical = true
     }
@@ -182,7 +172,7 @@ function validateRows(
 
     const issue: RowIssue = {
       rowIndex: idx,
-      rowNumber: idx + 2, // +1 for 1-based, +1 for header row
+      rowNumber: idx + 2,
       severity: hasCritical ? 'skip' : 'warning',
       messages,
     }
@@ -204,13 +194,12 @@ function validateRows(
 /* ------------------------------------------------------------------ */
 
 export default function ImportSubscribersPage() {
-  const router = useRouter()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [file, setFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [imported, setImported] = useState(false)
 
-  // Mapping: column index -> field key
   const [mapping, setMapping] = useState<Record<number, FieldKey>>(() =>
     MOCK_HEADERS.reduce((acc, header, idx) => {
       acc[idx] = autoDetectField(header)
@@ -256,7 +245,6 @@ export default function ImportSubscribersPage() {
     setMapping((prev) => ({ ...prev, [colIdx]: value }))
   }
 
-  // Per-column inline validation hint (from preview rows)
   const columnHints = useMemo(() => {
     const hints: Record<number, string | null> = {}
     MOCK_HEADERS.forEach((_, colIdx) => {
@@ -298,7 +286,6 @@ export default function ImportSubscribersPage() {
     return hints
   }, [mapping])
 
-  // Detect duplicate field mappings (same field used for >1 column)
   const duplicateFields = useMemo(() => {
     const counts: Record<string, number> = {}
     Object.values(mapping).forEach((f) => {
@@ -318,109 +305,170 @@ export default function ImportSubscribersPage() {
   /* ----------------------------- Render ----------------------------- */
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href="/subscribers"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to subscribers
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Import subscribers</h1>
-          <p className="text-muted-foreground">
-            Upload a CSV, map your columns, and bring your audience into CreatorHub.
-          </p>
-        </div>
+    <div className="dark min-h-screen bg-background text-foreground">
+      {/* Decorative gradient background */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-72 w-72 rounded-full bg-pink-500/10 blur-3xl" />
+        <div className="absolute top-1/3 -right-32 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />
       </div>
 
-      {/* Progress indicator */}
-      <StepProgress current={step} />
+      <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to home
+              </Link>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-500/30 bg-pink-500/10 px-2.5 py-0.5 text-xs font-medium text-pink-300">
+                  <Sparkles className="h-3 w-3" />
+                  Preview
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Import subscribers
+              </h1>
+              <p className="text-muted-foreground">
+                Upload a CSV, map your columns, and bring your audience into CreatorHub.
+              </p>
+            </div>
+          </div>
 
-      {/* Step content */}
-      {step === 1 && (
-        <UploadStep
-          file={file}
-          fileError={fileError}
-          isDragging={isDragging}
-          onDragEnter={() => setIsDragging(true)}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={onDrop}
-          onFileInput={onFileInput}
-          onRemove={removeFile}
-        />
-      )}
-
-      {step === 2 && (
-        <MapStep
-          headers={MOCK_HEADERS}
-          rows={MOCK_ROWS.slice(0, 5)}
-          mapping={mapping}
-          onChangeMapping={updateMapping}
-          columnHints={columnHints}
-          duplicateFields={duplicateFields}
-          canContinue={canContinueFromStep2}
-        />
-      )}
-
-      {step === 3 && (
-        <ReviewStep
-          totalRows={MOCK_ROWS.length}
-          stats={stats}
-          headers={MOCK_HEADERS}
-        />
-      )}
-
-      {/* Footer nav */}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border pt-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/subscribers')}
-        >
-          Cancel
-        </Button>
-
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          {step > 1 && (
-            <Button
-              variant="outline"
-              onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          )}
-
-          {step < 3 && (
-            <Button
-              disabled={
-                (step === 1 && !file) || (step === 2 && !canContinueFromStep2)
-              }
-              onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-            >
-              Continue
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          )}
-
-          {step === 3 && (
-            <Button
-              onClick={() => {
-                // Mock import — just navigate back.
-                router.push('/subscribers')
+          {imported ? (
+            <SuccessState
+              count={stats.valid + stats.warnings.length}
+              onReset={() => {
+                setImported(false)
+                setStep(1)
+                setFile(null)
               }}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              Import {stats.valid + stats.warnings.length} subscribers
-            </Button>
+            />
+          ) : (
+            <>
+              {/* Progress indicator */}
+              <StepProgress current={step} />
+
+              {/* Step content */}
+              {step === 1 && (
+                <UploadStep
+                  file={file}
+                  fileError={fileError}
+                  isDragging={isDragging}
+                  onDragEnter={() => setIsDragging(true)}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={onDrop}
+                  onFileInput={onFileInput}
+                  onRemove={removeFile}
+                />
+              )}
+
+              {step === 2 && (
+                <MapStep
+                  headers={MOCK_HEADERS}
+                  rows={MOCK_ROWS.slice(0, 5)}
+                  mapping={mapping}
+                  onChangeMapping={updateMapping}
+                  columnHints={columnHints}
+                  duplicateFields={duplicateFields}
+                  canContinue={canContinueFromStep2}
+                />
+              )}
+
+              {step === 3 && (
+                <ReviewStep
+                  totalRows={MOCK_ROWS.length}
+                  stats={stats}
+                  headers={MOCK_HEADERS}
+                />
+              )}
+
+              {/* Footer nav */}
+              <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <Button variant="ghost" asChild>
+                  <Link href="/">Cancel</Link>
+                </Button>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  {step > 1 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back
+                    </Button>
+                  )}
+
+                  {step < 3 && (
+                    <Button
+                      disabled={
+                        (step === 1 && !file) || (step === 2 && !canContinueFromStep2)
+                      }
+                      onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)}
+                      className="bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700"
+                    >
+                      Continue
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  )}
+
+                  {step === 3 && (
+                    <Button
+                      onClick={() => setImported(true)}
+                      className="bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                      Import {stats.valid + stats.warnings.length} subscribers
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Success state                                                      */
+/* ------------------------------------------------------------------ */
+
+function SuccessState({ count, onReset }: { count: number; onReset: () => void }) {
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/20">
+          <CheckCircle2 className="h-7 w-7 text-white" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold">Import complete</h2>
+          <p className="text-sm text-muted-foreground">
+            {count.toLocaleString()} subscribers were imported successfully.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={onReset}
+          >
+            Import another file
+          </Button>
+          <Button
+            asChild
+            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700"
+          >
+            <Link href="/">Back to home</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -518,7 +566,7 @@ function UploadStep({
       <CardHeader>
         <CardTitle>Upload your CSV</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Drag & drop a CSV file, or click to browse. Max file size 10MB.
+          Drag &amp; drop a CSV file, or click to browse. Max file size 10MB.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
