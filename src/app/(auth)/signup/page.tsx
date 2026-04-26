@@ -319,7 +319,7 @@ export default function SignupPage() {
             <Separator />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">
+            <span className="bg-zinc-900 px-2 text-muted-foreground">
               Or continue with
             </span>
           </div>
