@@ -14,8 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DollarSign, Sparkles, TrendingUp, Info } from 'lucide-react'
+import { DollarSign, Sparkles, TrendingUp, Info, Users, Plus } from 'lucide-react'
 import { Subscriber } from '@/types'
+import { EmptyState } from '@/components/ui/empty-state'
+import Link from 'next/link'
 
 interface PricingRecommendation {
   subscriberId: string
@@ -203,10 +205,19 @@ export default function PPVPage() {
               ))}
             </div>
           ) : recommendations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No active subscribers found</p>
-              <p className="text-sm">Add subscribers to get pricing recommendations</p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No active subscribers yet"
+              description="PPV pricing tunes itself to each fan's tier, engagement, and spend. Add active subscribers to start getting recommendations."
+              action={
+                <Link href="/subscribers">
+                  <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add subscribers
+                  </Button>
+                </Link>
+              }
+            />
           ) : (
             <div className="rounded-lg border">
               <Table>

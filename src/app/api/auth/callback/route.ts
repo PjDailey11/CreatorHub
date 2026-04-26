@@ -6,6 +6,23 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
 
+  // Surface OAuth provider errors that come back as ?error=...&error_description=...
+  const oauthError = searchParams.get('error')
+  const oauthErrorDescription = searchParams.get('error_description')
+  if (oauthError) {
+    console.log('[v0] auth callback received provider error:', {
+      error: oauthError,
+      description: oauthErrorDescription,
+    })
+    const params = new URLSearchParams({
+      error: oauthError,
+      ...(oauthErrorDescription
+        ? { error_description: oauthErrorDescription }
+        : {}),
+    })
+    return NextResponse.redirect(`${origin}/login?${params.toString()}`)
+  }
+
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -22,7 +39,24 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}${next}`)
       }
     }
+
+    console.log('[v0] exchangeCodeForSession failed:', {
+      message: error.message,
+      status: error.status,
+      code: (error as { code?: string }).code,
+      name: error.name,
+    })
+    const params = new URLSearchParams({
+      error: 'auth_callback_error',
+      error_description: error.message,
+    })
+    return NextResponse.redirect(`${origin}/login?${params.toString()}`)
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_error`)
+  console.log('[v0] auth callback hit with neither code nor provider error')
+  return NextResponse.redirect(
+    `${origin}/login?error=auth_callback_error&error_description=${encodeURIComponent(
+      'No authorization code returned from provider.',
+    )}`,
+  )
 }

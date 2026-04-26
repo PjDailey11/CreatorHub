@@ -15,6 +15,7 @@ import {
 import { Plus, MoreHorizontal, Play, Pause, Copy, Trash2, GitBranch } from 'lucide-react'
 import { Funnel } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
+import { EmptyState } from '@/components/ui/empty-state'
 
 const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800',
@@ -135,23 +136,19 @@ export default function FunnelsPage() {
           ))}
         </div>
       ) : funnels.length === 0 ? (
-        <Card className="border-2 border-dashed">
-          <CardContent className="py-12 text-center">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mx-auto mb-4">
-              <GitBranch className="h-6 w-6 text-pink-600" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">No funnels yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first DM funnel to start automating subscriber engagement
-            </p>
+        <EmptyState
+          icon={GitBranch}
+          title="No funnels yet"
+          description="Automate subscriber engagement with DM funnels that send the right message at the right moment."
+          action={
             <Link href="/funnels/new">
-              <Button className="bg-gradient-to-r from-pink-500 to-purple-600">
+              <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Create Funnel
+                Create your first funnel
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {funnels.map((funnel) => (

@@ -3,10 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { UserMenu } from '@/components/auth/user-menu'
 import {
   LayoutDashboard,
   Users,
@@ -14,7 +13,6 @@ import {
   DollarSign,
   BarChart3,
   Settings,
-  LogOut,
   Menu,
   Sparkles,
 } from 'lucide-react'
@@ -30,7 +28,6 @@ const navigation = [
 
 function NavContent() {
   const pathname = usePathname()
-  const { profile, signOut } = useAuth()
 
   return (
     <div className="flex h-full flex-col">
@@ -43,7 +40,8 @@ function NavContent() {
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.name}
@@ -62,26 +60,8 @@ function NavContent() {
         })}
       </nav>
 
-      <div className="border-t p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-              {profile?.full_name?.charAt(0) || profile?.email?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-gray-600"
-          onClick={signOut}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign out
-        </Button>
+      <div className="border-t p-2">
+        <UserMenu variant="wide" align="end" side="top" />
       </div>
     </div>
   )

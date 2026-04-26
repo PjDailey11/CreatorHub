@@ -1,19 +1,163 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
+
+type Mode = 'password' | 'magic'
+
+const ERROR_MESSAGES: Record<string, string> = {
+  auth_callback_error:
+    'We couldn\u2019t finish signing you in. Please try again.',
+  oauth_provider_not_configured:
+    'Google sign-in isn\u2019t enabled yet. Use email + password below or contact the site owner.',
+  oauth_redirect_uri_mismatch:
+    'This preview URL isn\u2019t in the Supabase allowed redirect list. Add it under Authentication \u2192 URL Configuration.',
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const [mode, setMode] = useState<Mode>('password')
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [resendingConfirmation, setResendingConfirmation] = useState(false)
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error'
+    text: string
+    detail?: string
+  } | null>(null)
+
+  // Pre-fill email from ?email=... (e.g. when redirected from /signup)
+  useEffect(() => {
+    const prefill = searchParams.get('email')
+    if (prefill) setEmail(prefill)
+  }, [searchParams])
+
+  // Surface errors that the OAuth callback redirected back with
+  useEffect(() => {
+    const err = searchParams.get('error')
+    const description = searchParams.get('error_description')
+    if (err) {
+      console.log('[v0] Login received callback error:', { err, description })
+      setMessage({
+        type: 'error',
+        text:
+          description ||
+          ERROR_MESSAGES[err] ||
+          `Sign-in failed (${err}). Please try again.`,
+        detail: description ? `code: ${err}` : undefined,
+      })
+    }
+  }, [searchParams])
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage(null)
+    setUnconfirmedEmail(null)
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      console.log('[v0] signInWithPassword failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
+      const lower = error.message.toLowerCase()
+      const statusDetail =
+        (error as { code?: string }).code || error.status
+          ? `${(error as { code?: string }).code ?? ''}${
+              error.status ? ` \u00b7 status ${error.status}` : ''
+            }`.trim()
+          : undefined
+
+      // Specific case: account exists but email isn't confirmed
+      if (
+        lower.includes('email not confirmed') ||
+        lower.includes('not confirmed')
+      ) {
+        setUnconfirmedEmail(email)
+        setMessage({
+          type: 'error',
+          text:
+            'Please verify your email \u2014 check your inbox or click \u201cResend\u201d below.',
+          detail: statusDetail,
+        })
+      } else if (lower.includes('invalid login credentials')) {
+        setMessage({
+          type: 'error',
+          text: 'Email or password is incorrect.',
+          detail: statusDetail,
+        })
+      } else {
+        setMessage({
+          type: 'error',
+          text: error.message,
+          detail: statusDetail,
+        })
+      }
+      setLoading(false)
+      return
+    }
+
+    router.push('/dashboard')
+    router.refresh()
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return
+    setResendingConfirmation(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: unconfirmedEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
+    })
+    if (error) {
+      console.log('[v0] resend confirmation failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
+      toast.error(
+        error.status === 429
+          ? 'Too many requests. Wait a minute before resending.'
+          : error.message,
+      )
+    } else {
+      toast.success(
+        'Confirmation email sent. Check your inbox (and spam folder).',
+      )
+    }
+    setResendingConfirmation(false)
+  }
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,20 +172,61 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setMessage({ type: 'error', text: error.message })
+      console.log('[v0] signInWithOtp failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
+      setMessage({
+        type: 'error',
+        text:
+          error.status === 429
+            ? 'Too many magic-link requests. Wait a minute and try again, or use email + password.'
+            : error.message,
+        detail: error.status ? `status ${error.status}` : undefined,
+      })
     } else {
-      setMessage({ type: 'success', text: 'Check your email for the magic link!' })
+      toast.success('Check your email for the magic link.')
     }
     setLoading(false)
   }
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
+    setGoogleLoading(true)
+    setMessage(null)
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     })
+
+    if (error) {
+      console.log('[v0] signInWithOAuth(google) failed:', {
+        message: error.message,
+        status: error.status,
+        code: (error as { code?: string }).code,
+      })
+      setMessage({
+        type: 'error',
+        text: `Google sign-in failed: ${error.message}. Make sure Google is enabled in your Supabase project (Authentication \u2192 Providers).`,
+        detail: error.status ? `status ${error.status}` : undefined,
+      })
+      setGoogleLoading(false)
+      return
+    }
+
+    // signInWithOAuth normally redirects; if it didn't, surface that too
+    if (!data?.url) {
+      console.log('[v0] signInWithOAuth(google) returned no redirect URL')
+      setMessage({
+        type: 'error',
+        text:
+          'Google didn\u2019t return a redirect URL. Double-check that the Google provider is enabled and your client ID/secret are filled in.',
+      })
+      setGoogleLoading(false)
+    }
   }
 
   return (
@@ -50,36 +235,147 @@ export default function LoginPage() {
         <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
           Welcome Back
         </CardTitle>
-        <CardDescription>
-          Sign in to your CreatorHub account
-        </CardDescription>
+        <CardDescription>Sign in to your CreatorHub account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleMagicLink} className="space-y-4">
+        {message && (
+          <div
+            role={message.type === 'error' ? 'alert' : 'status'}
+            className={`flex items-start gap-2 rounded-md border p-3 text-sm ${
+              message.type === 'error'
+                ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200'
+                : 'border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'
+            }`}
+          >
+            {message.type === 'error' && (
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            )}
+            <div className="space-y-0.5">
+              <p className="font-medium leading-snug">{message.text}</p>
+              {message.detail && (
+                <p className="text-xs text-muted-foreground">
+                  {message.detail}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <form
+          onSubmit={mode === 'password' ? handlePasswordLogin : handleMagicLink}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
+
+          {mode === 'password' && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-pink-500 hover:text-pink-600 font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'magic' && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('password')
+                  setMessage(null)
+                }}
+                className="text-xs text-pink-500 hover:text-pink-600 font-medium"
+              >
+                Use password instead
+              </button>
+            </div>
+          )}
+
+          {mode === 'password' && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('magic')
+                  setMessage(null)
+                  setUnconfirmedEmail(null)
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Or sign in with a magic link instead
+              </button>
+            </div>
+          )}
+
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
             disabled={loading}
           >
-            {loading ? 'Sending...' : 'Send Magic Link'}
+            {loading
+              ? mode === 'password'
+                ? 'Signing in...'
+                : 'Sending...'
+              : mode === 'password'
+                ? 'Sign in'
+                : 'Send magic link'}
           </Button>
         </form>
 
-        {message && (
-          <p className={`text-sm text-center ${message.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-            {message.text}
-          </p>
+        {unconfirmedEmail && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleResendConfirmation}
+            disabled={resendingConfirmation}
+          >
+            {resendingConfirmation
+              ? 'Sending...'
+              : 'Resend confirmation email'}
+          </Button>
         )}
 
         <div className="relative">
@@ -87,17 +383,20 @@ export default function LoginPage() {
             <Separator />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+            <span className="bg-zinc-900 px-2 text-muted-foreground">
+              Or continue with
+            </span>
           </div>
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full bg-transparent"
           onClick={handleGoogleLogin}
+          disabled={googleLoading}
         >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"
@@ -115,13 +414,16 @@ export default function LoginPage() {
               fill="#EA4335"
             />
           </svg>
-          Google
+          {googleLoading ? 'Redirecting to Google...' : 'Google'}
         </Button>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-pink-500 hover:text-pink-600 font-medium">
+          <Link
+            href="/signup"
+            className="text-pink-500 hover:text-pink-600 font-medium"
+          >
             Sign up
           </Link>
         </p>
