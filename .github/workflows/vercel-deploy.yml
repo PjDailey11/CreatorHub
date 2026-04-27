@@ -31,6 +31,17 @@ jobs:
       - name: Pull Vercel preview environment information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Validate pulled preview environment variables
+        run: |
+          ENV_FILE=".vercel/.env.preview.local"
+          for key in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY STRIPE_SECRET_KEY; do
+            if ! grep -q "^${key}=" "$ENV_FILE"; then
+              echo "Missing $key in $ENV_FILE."
+              echo "This usually means VERCEL_ORG_ID/VERCEL_PROJECT_ID points to the wrong Vercel project."
+              exit 1
+            fi
+          done
+
       - name: Build preview artifacts
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -55,6 +66,17 @@ jobs:
 
       - name: Pull Vercel production environment information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Validate pulled production environment variables
+        run: |
+          ENV_FILE=".vercel/.env.production.local"
+          for key in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY STRIPE_SECRET_KEY; do
+            if ! grep -q "^${key}=" "$ENV_FILE"; then
+              echo "Missing $key in $ENV_FILE."
+              echo "This usually means VERCEL_ORG_ID/VERCEL_PROJECT_ID points to the wrong Vercel project."
+              exit 1
+            fi
+          done
 
       - name: Build production artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
