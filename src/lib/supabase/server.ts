@@ -1,13 +1,27 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
+import { logError } from '@/lib/logger'
+
+function requireEnvVar(key: 'NEXT_PUBLIC_SUPABASE_URL' | 'NEXT_PUBLIC_SUPABASE_ANON_KEY' | 'SUPABASE_SERVICE_ROLE_KEY'): string {
+  const value = process.env[key]
+  if (!value) {
+    logError({
+      scope: 'supabase.server',
+      event: 'missing_env_var',
+      envVar: key,
+    })
+    throw new Error(`${key} is not configured`)
+  }
+  return value
+}
 
 export async function createClient() {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       cookies: {
         getAll() {
@@ -33,8 +47,8 @@ export async function createServiceClient() {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    requireEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnvVar('SUPABASE_SERVICE_ROLE_KEY'),
     {
       cookies: {
         getAll() {
@@ -59,8 +73,8 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export function createAdminClient() {
   return createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    requireEnvVar('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnvVar('SUPABASE_SERVICE_ROLE_KEY'),
     {
       auth: {
         autoRefreshToken: false,

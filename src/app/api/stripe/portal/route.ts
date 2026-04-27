@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/server'
+import { logError, logInfo } from '@/lib/logger'
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID()
   try {
     const stripe = getStripe()
     const supabase = await createClient()
@@ -27,9 +29,22 @@ export async function POST(request: Request) {
       return_url: `${request.headers.get('origin')}/settings`,
     })
 
+    logInfo({
+      scope: 'stripe.portal',
+      event: 'billing_portal_session_created',
+      requestId,
+      userId: user.id,
+      customerId: profile.stripe_customer_id,
+    })
+
     return NextResponse.json({ url: portalSession.url })
   } catch (error) {
-    console.error('Portal error:', error)
+    logError({
+      scope: 'stripe.portal',
+      event: 'billing_portal_session_failed',
+      requestId,
+      error: error instanceof Error ? error.message : 'unknown error',
+    })
     return NextResponse.json(
       { error: 'Failed to create portal session' },
       { status: 500 }

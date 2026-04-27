@@ -117,6 +117,42 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          event_type: string
+          id: string
+          last_error: string | null
+          processed_at: string | null
+          status: string
+          stripe_event_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          status: string
+          stripe_event_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          status?: string
+          stripe_event_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           id: string

@@ -224,8 +224,8 @@ src/
 
 Two workflows are included:
 
-- `ci.yml`: runs lint checks for every pull request and push to `main`
-- `vercel-deploy.yml`: deploys PRs to Vercel Preview and `main` to Vercel Production
+- `ci.yml`: runs lint, typecheck, and production build checks for every pull request and push to `main`
+- `vercel-deploy.yml`: runs CI checks first, then deploys PRs to Vercel Preview and `main` to Vercel Production
 
 ### GitHub repository secrets required
 
@@ -245,6 +245,55 @@ Add these repository secrets in GitHub (`Settings` -> `Secrets and variables` ->
    - `orgId` -> `VERCEL_ORG_ID`
    - `projectId` -> `VERCEL_PROJECT_ID`
 3. Create a Vercel token from [Vercel account tokens](https://vercel.com/account/tokens) and save as `VERCEL_TOKEN`.
+
+## Operations Runbook
+
+### Pre-deploy checklist
+
+Before shipping to production:
+
+- Confirm all CI jobs pass (`lint`, `typecheck`, `build`)
+- Confirm `Vercel Deploy` workflow points at the correct project (it prints `.vercel/project.json`)
+- Confirm required production env vars exist in Vercel:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `STRIPE_SECRET_KEY`
+  - `STRIPE_STARTER_PRICE_ID`
+  - `STRIPE_PRO_PRICE_ID`
+  - `STRIPE_AGENCY_PRICE_ID`
+  - `STRIPE_WEBHOOK_SECRET`
+  - `SENTRY_DSN`
+  - `NEXT_PUBLIC_SENTRY_DSN`
+  - `SENTRY_ORG`
+  - `SENTRY_PROJECT`
+  - `SENTRY_AUTH_TOKEN` (only needed for source map upload during CI deploys)
+
+### Stripe webhook verification
+
+Webhook processing is idempotent via `public.stripe_webhook_events`.
+
+After a Stripe event:
+
+1. Check `stripe_webhook_events` for the event ID.
+2. Verify `status = 'succeeded'` and `attempts >= 1`.
+3. Replay the same event from Stripe dashboard and confirm no duplicate profile/subscription mutation occurs.
+
+### Fast failure triage
+
+If deploy/build fails:
+
+1. Check `Pull Vercel ... environment information` log output for wrong linked project.
+2. Check `Validate pulled ... environment variables` step for missing env vars.
+3. For Stripe route failures, inspect logs with scope `stripe.checkout`, `stripe.portal`, or `stripe.webhook`.
+4. For Supabase env failures, inspect logs with scope `supabase.server`.
+5. Check Sentry for captured server exceptions tagged with route scope.
+
+### One-time setup tasks
+
+- Run the migration in `supabase/migrations/202604270001_create_stripe_webhook_events.sql`.
+- Configure Stripe webhook endpoint to `/api/stripe/webhook`.
+
 ## Contributing
 
 Contributions are welcome! Please read our contributing guidelines before submitting a PR.

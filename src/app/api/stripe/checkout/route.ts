@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import { getStripe, getPriceId } from '@/lib/stripe'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/server'
+import { logError, logInfo } from '@/lib/logger'
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID()
   try {
     const stripe = getStripe()
     const { plan } = await request.json() as { plan: PricingPlan }
@@ -70,9 +72,23 @@ export async function POST(request: Request) {
       },
     })
 
+    logInfo({
+      scope: 'stripe.checkout',
+      event: 'checkout_session_created',
+      requestId,
+      userId: user.id,
+      plan,
+      customerId,
+    })
+
     return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error('Checkout error:', error)
+    logError({
+      scope: 'stripe.checkout',
+      event: 'checkout_session_failed',
+      requestId,
+      error: error instanceof Error ? error.message : 'unknown error',
+    })
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getStripe } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
+import { logError, logInfo } from '@/lib/logger'
 import Stripe from 'stripe'
 
+type WebhookEventStatus = 'processing' | 'succeeded' | 'failed'
+
+function resolveTier(priceId: string): 'starter' | 'pro' | 'agency' {
+  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro'
+  if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) return 'agency'
+  return 'starter'
+}
+
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID()
   const stripe = getStripe()
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret) {
@@ -18,11 +29,64 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (error) {
-    console.error('Webhook signature verification failed:', error)
+    logError({
+      scope: 'stripe.webhook',
+      event: 'signature_verification_failed',
+      requestId,
+      error: error instanceof Error ? error.message : 'unknown error',
+    })
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
   const supabase = createAdminClient()
+  const nowIso = new Date().toISOString()
+  const { data: existingEvent } = await supabase
+    .from('stripe_webhook_events')
+    .select('id, status, attempts')
+    .eq('stripe_event_id', event.id)
+    .maybeSingle()
+
+  if (existingEvent?.status === 'succeeded') {
+    logInfo({
+      scope: 'stripe.webhook',
+      event: 'duplicate_event_skipped',
+      requestId,
+      eventId: event.id,
+      eventType: event.type,
+    })
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  const attempts = (existingEvent?.attempts ?? 0) + 1
+  const statusPayload: {
+    stripe_event_id: string
+    event_type: string
+    status: WebhookEventStatus
+    attempts: number
+    last_error: string | null
+    updated_at: string
+  } = {
+    stripe_event_id: event.id,
+    event_type: event.type,
+    status: 'processing',
+    attempts,
+    last_error: null,
+    updated_at: nowIso,
+  }
+
+  if (existingEvent?.id) {
+    await supabase
+      .from('stripe_webhook_events')
+      .update(statusPayload)
+      .eq('id', existingEvent.id)
+  } else {
+    await supabase
+      .from('stripe_webhook_events')
+      .insert({
+        ...statusPayload,
+        processed_at: null,
+      })
+  }
 
   try {
     switch (event.type) {
@@ -36,11 +100,7 @@ export async function POST(request: Request) {
           // Get the subscription to determine the plan
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
           const priceId = subscription.items.data[0].price.id
-          
-          // Determine tier based on price ID
-          let tier = 'starter'
-          if (priceId === process.env.STRIPE_PRO_PRICE_ID) tier = 'pro'
-          if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) tier = 'agency'
+          const tier = resolveTier(priceId)
 
           await supabase
             .from('profiles')
@@ -59,10 +119,7 @@ export async function POST(request: Request) {
 
         if (userId) {
           const priceId = subscription.items.data[0].price.id
-          
-          let tier = 'starter'
-          if (priceId === process.env.STRIPE_PRO_PRICE_ID) tier = 'pro'
-          if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) tier = 'agency'
+          const tier = resolveTier(priceId)
 
           // Handle cancelled subscriptions
           if (subscription.cancel_at_period_end) {
@@ -101,9 +158,58 @@ export async function POST(request: Request) {
       }
     }
 
+    await supabase
+      .from('stripe_webhook_events')
+      .update({
+        status: 'succeeded',
+        processed_at: new Date().toISOString(),
+        last_error: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_event_id', event.id)
+
+    logInfo({
+      scope: 'stripe.webhook',
+      event: 'event_processed',
+      requestId,
+      eventId: event.id,
+      eventType: event.type,
+      attempts,
+    })
+
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Webhook handler error:', error)
+    Sentry.captureException(error, {
+      tags: {
+        scope: 'stripe.webhook',
+        eventType: event.type,
+      },
+      extra: {
+        eventId: event.id,
+        requestId,
+      },
+    })
+
+    const errorMessage =
+      error instanceof Error ? error.message : 'unknown webhook error'
+
+    await supabase
+      .from('stripe_webhook_events')
+      .update({
+        status: 'failed',
+        last_error: errorMessage,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_event_id', event.id)
+
+    logError({
+      scope: 'stripe.webhook',
+      event: 'event_processing_failed',
+      requestId,
+      eventId: event.id,
+      eventType: event.type,
+      error: errorMessage,
+    })
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
   }
 }
