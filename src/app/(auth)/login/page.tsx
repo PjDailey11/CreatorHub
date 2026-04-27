@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -37,40 +37,35 @@ function LoginPageInner() {
 
   const [mode, setMode] = useState<Mode>('password')
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
   const [resendingConfirmation, setResendingConfirmation] = useState(false)
+  const prefilledEmail = searchParams.get('email') ?? ''
+  const callbackMessage = useMemo(() => {
+    const err = searchParams.get('error')
+    const description = searchParams.get('error_description')
+
+    if (!err) return null
+
+    console.log('[v0] Login received callback error:', { err, description })
+    return {
+      type: 'error' as const,
+      text:
+        description ||
+        ERROR_MESSAGES[err] ||
+        `Sign-in failed (${err}). Please try again.`,
+      detail: description ? `code: ${err}` : undefined,
+    }
+  }, [searchParams])
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
     text: string
     detail?: string
   } | null>(null)
-
-  // Pre-fill email from ?email=... (e.g. when redirected from /signup)
-  useEffect(() => {
-    const prefill = searchParams.get('email')
-    if (prefill) setEmail(prefill)
-  }, [searchParams])
-
-  // Surface errors that the OAuth callback redirected back with
-  useEffect(() => {
-    const err = searchParams.get('error')
-    const description = searchParams.get('error_description')
-    if (err) {
-      console.log('[v0] Login received callback error:', { err, description })
-      setMessage({
-        type: 'error',
-        text:
-          description ||
-          ERROR_MESSAGES[err] ||
-          `Sign-in failed (${err}). Please try again.`,
-        detail: description ? `code: ${err}` : undefined,
-      })
-    }
-  }, [searchParams])
+  const [email, setEmail] = useState(prefilledEmail)
+  const activeMessage = message ?? callbackMessage
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -238,23 +233,23 @@ function LoginPageInner() {
         <CardDescription>Sign in to your CreatorHub account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {message && (
+        {activeMessage && (
           <div
-            role={message.type === 'error' ? 'alert' : 'status'}
+            role={activeMessage.type === 'error' ? 'alert' : 'status'}
             className={`flex items-start gap-2 rounded-md border p-3 text-sm ${
-              message.type === 'error'
+              activeMessage.type === 'error'
                 ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200'
                 : 'border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'
             }`}
           >
-            {message.type === 'error' && (
+            {activeMessage.type === 'error' && (
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             )}
             <div className="space-y-0.5">
-              <p className="font-medium leading-snug">{message.text}</p>
-              {message.detail && (
+              <p className="font-medium leading-snug">{activeMessage.text}</p>
+              {activeMessage.detail && (
                 <p className="text-xs text-muted-foreground">
-                  {message.detail}
+                  {activeMessage.detail}
                 </p>
               )}
             </div>

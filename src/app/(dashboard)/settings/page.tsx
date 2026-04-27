@@ -42,8 +42,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile) {
-      setFullName(profile.full_name || '')
-      setOnlyfansUsername(profile.onlyfans_username || '')
+      setTimeout(() => {
+        setFullName(profile.full_name || '')
+        setOnlyfansUsername(profile.onlyfans_username || '')
+      }, 0)
     }
   }, [profile])
 

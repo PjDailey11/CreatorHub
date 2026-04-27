@@ -19,6 +19,7 @@ const stepIcons = {
 }
 
 export function FunnelPreview({ name, triggerType, steps }: FunnelPreviewProps) {
+  void name
   const getTriggerLabel = (type: string) => {
     switch (type) {
       case 'dm_received':

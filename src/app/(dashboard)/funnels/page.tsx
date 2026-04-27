@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +34,7 @@ export default function FunnelsPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  const fetchFunnels = async () => {
+  const fetchFunnels = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -48,11 +48,15 @@ export default function FunnelsPage() {
       setFunnels(data)
     }
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    fetchFunnels()
-  }, [])
+    const timer = setTimeout(() => {
+      void fetchFunnels()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [fetchFunnels])
 
   const toggleFunnelStatus = async (funnel: Funnel) => {
     const newStatus = funnel.status === 'active' ? 'paused' : 'active'

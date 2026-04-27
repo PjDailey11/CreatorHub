@@ -84,7 +84,7 @@ export default function SubscribersPage() {
     }
   }
 
-  const FormFields = () => (
+  const renderFormFields = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Subscriber Name</Label>
@@ -162,7 +162,7 @@ export default function SubscribersPage() {
                 Add a new subscriber to track their engagement and revenue.
               </DialogDescription>
             </DialogHeader>
-            <FormFields />
+            {renderFormFields()}
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
               <Button onClick={handleAdd} className="bg-gradient-to-r from-pink-500 to-purple-600">
@@ -190,7 +190,7 @@ export default function SubscribersPage() {
               Update subscriber information.
             </DialogDescription>
           </DialogHeader>
-          <FormFields />
+          {renderFormFields()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
             <Button onClick={handleUpdate} className="bg-gradient-to-r from-pink-500 to-purple-600">

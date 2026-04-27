@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Subscriber, SubscriberStats } from '@/types'
 
@@ -10,7 +10,24 @@ export function useSubscribers() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  const fetchSubscribers = async () => {
+  const calculateStats = (subs: Subscriber[]) => {
+    const active = subs.filter(s => s.status === 'active')
+    const totalRevenue = subs.reduce((acc, s) => acc + (s.total_spent || 0), 0)
+    const mrr = active.reduce((acc, s) => acc + (s.subscription_price || 0), 0)
+    const churned = subs.filter(s => s.status === 'churned').length
+    const churnRate = subs.length > 0 ? (churned / subs.length) * 100 : 0
+    const avgLtv = subs.length > 0 ? totalRevenue / subs.length : 0
+
+    setStats({
+      totalSubscribers: subs.length,
+      activeSubscribers: active.length,
+      mrr,
+      churnRate,
+      avgLtv,
+    })
+  }
+
+  const fetchSubscribers = useCallback(async () => {
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -30,24 +47,7 @@ export function useSubscribers() {
       calculateStats(data)
     }
     setLoading(false)
-  }
-
-  const calculateStats = (subs: Subscriber[]) => {
-    const active = subs.filter(s => s.status === 'active')
-    const totalRevenue = subs.reduce((acc, s) => acc + (s.total_spent || 0), 0)
-    const mrr = active.reduce((acc, s) => acc + (s.subscription_price || 0), 0)
-    const churned = subs.filter(s => s.status === 'churned').length
-    const churnRate = subs.length > 0 ? (churned / subs.length) * 100 : 0
-    const avgLtv = subs.length > 0 ? totalRevenue / subs.length : 0
-
-    setStats({
-      totalSubscribers: subs.length,
-      activeSubscribers: active.length,
-      mrr,
-      churnRate,
-      avgLtv,
-    })
-  }
+  }, [supabase])
 
   const addSubscriber = async (subscriber: Omit<Subscriber, 'id' | 'user_id' | 'joined_at'>) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -95,8 +95,12 @@ export function useSubscribers() {
   }
 
   useEffect(() => {
-    fetchSubscribers()
-  }, [])
+    const timer = setTimeout(() => {
+      void fetchSubscribers()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [fetchSubscribers])
 
   return {
     subscribers,

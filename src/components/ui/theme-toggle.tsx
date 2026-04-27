@@ -8,13 +8,15 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    const isDarkMode = document.documentElement.classList.contains('dark') ||
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    setIsDark(isDarkMode)
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark')
-    }
+    setTimeout(() => {
+      setMounted(true)
+      const isDarkMode = document.documentElement.classList.contains('dark') ||
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      setIsDark(isDarkMode)
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark')
+      }
+    }, 0)
   }, [])
 
   const toggleTheme = () => {

@@ -24,8 +24,6 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -101,8 +99,6 @@ function generateFans(): Fan[] {
     seed = (seed * 9301 + 49297) % 233280
     return seed / 233280
   }
-  const tiers: Tier[] = ["standard", "premium", "vip"]
-  const statuses: Status[] = ["active", "paused", "churned"]
   for (let i = 0; i < 500; i++) {
     const first = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)]
     const last = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)]

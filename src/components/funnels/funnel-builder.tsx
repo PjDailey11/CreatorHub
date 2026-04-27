@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { FunnelNode } from './funnel-node'
-import { Plus, MessageSquare, Clock, GitBranch, ArrowDown, Zap } from 'lucide-react'
+import { MessageSquare, Clock, GitBranch, ArrowDown, Zap } from 'lucide-react'
 import { FunnelStepWithDetails } from '@/types'
 
 interface FunnelBuilderProps {
