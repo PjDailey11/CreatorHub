@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { stripe, getPriceId } from '@/lib/stripe'
+import { getStripe, getPriceId } from '@/lib/stripe'
 import { PRICING_PLANS, type PricingPlan } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   try {
+    const stripe = getStripe()
     const { plan } = await request.json() as { plan: PricingPlan }
 
     if (!plan || !PRICING_PLANS[plan]) {
