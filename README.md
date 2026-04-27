@@ -224,7 +224,7 @@ src/
 
 Two workflows are included:
 
-- `ci.yml`: runs lint + build for every pull request and push to `main`
+- `ci.yml`: runs lint checks for every pull request and push to `main`
 - `vercel-deploy.yml`: deploys PRs to Vercel Preview and `main` to Vercel Production
 
 ### GitHub repository secrets required
@@ -245,7 +245,6 @@ Add these repository secrets in GitHub (`Settings` -> `Secrets and variables` ->
    - `orgId` -> `VERCEL_ORG_ID`
    - `projectId` -> `VERCEL_PROJECT_ID`
 3. Create a Vercel token from [Vercel account tokens](https://vercel.com/account/tokens) and save as `VERCEL_TOKEN`.
-
 ## Contributing
 
 Contributions are welcome! Please read our contributing guidelines before submitting a PR.
