@@ -80,7 +80,7 @@ export function MarketingHeader() {
                 </Link>
                 <Link href="/signup">
                   <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all">
-                    Get Started
+                    Start Free Trial
                   </Button>
                 </Link>
               </>

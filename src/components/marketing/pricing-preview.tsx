@@ -9,6 +9,12 @@ import { PRICING_PLANS } from '@/lib/pricing'
 
 const planOrder = ['starter', 'pro', 'agency'] as const
 
+const planDescriptions = {
+  starter: 'For solo creators getting organized before complexity piles up.',
+  pro: 'For growing creators who want funnels, pricing signals, and better retention.',
+  agency: 'For managers running multiple creator accounts with shared visibility.',
+} as const
+
 export function PricingPreview() {
   return (
     <section id="pricing" className="py-24 relative overflow-hidden">
@@ -21,16 +27,17 @@ export function PricingPreview() {
         <div className="text-center mb-16">
           <Badge className="mb-5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 dark:from-pink-500/20 dark:to-purple-500/20 text-pink-600 dark:text-pink-400 border-pink-200/50 dark:border-pink-800/50 px-5 py-2 text-sm font-medium">
             <CreditCard className="h-4 w-4 mr-2" />
-            Simple Pricing
+            Pricing
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-gray-900 dark:text-white">
-            Plans That{' '}
+            Start small. Upgrade when the workflow{' '}
             <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              Scale With You
+              pays for itself
             </span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
-            Start free and upgrade as you grow. All plans include a 14-day free trial.
+            Every account starts with a 14-day Pro trial, so you can test automation,
+            pricing, and reporting before you decide what plan fits.
           </p>
         </div>
 
@@ -65,6 +72,9 @@ export function PricingPreview() {
 
                 <CardHeader className="text-center pb-2 pt-8">
                   <CardTitle className="text-2xl text-gray-900 dark:text-white">{plan.name}</CardTitle>
+                  <p className="mt-3 min-h-12 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                    {planDescriptions[planKey]}
+                  </p>
                   <div className="mt-4">
                     <span className="text-5xl font-bold text-gray-900 dark:text-white">${plan.price}</span>
                     <span className="text-gray-500 dark:text-gray-400 font-medium">/month</span>
@@ -85,18 +95,23 @@ export function PricingPreview() {
                 </CardContent>
 
                 <CardFooter className="pt-6">
-                  <Link href="/signup" className="w-full">
-                    <Button
-                      className={`w-full py-6 text-lg font-semibold group ${
-                        isPopular
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40'
-                          : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'
-                      }`}
-                    >
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
+                  <div className="w-full">
+                    <Link href="/signup" className="w-full">
+                      <Button
+                        className={`w-full py-6 text-lg font-semibold group ${
+                          isPopular
+                            ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40'
+                            : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'
+                        }`}
+                      >
+                        {isPopular ? 'Try Pro Free' : 'Start Free Trial'}
+                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                    <p className="mt-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                      No credit card required to start.
+                    </p>
+                  </div>
                 </CardFooter>
               </Card>
             )
@@ -105,20 +120,20 @@ export function PricingPreview() {
 
         <div className="text-center mt-12">
           <p className="text-gray-500 dark:text-gray-400 font-medium">
-            All plans include a 14-day free trial. No credit card required.
+            Start on Pro, then switch plans when you know what volume and automation you actually need.
           </p>
           <div className="flex items-center justify-center gap-6 mt-4 text-sm text-gray-400 dark:text-gray-500">
+            <span className="flex items-center gap-1">
+              <Check className="h-4 w-4 text-green-500" />
+              14-day Pro trial
+            </span>
             <span className="flex items-center gap-1">
               <Check className="h-4 w-4 text-green-500" />
               Cancel anytime
             </span>
             <span className="flex items-center gap-1">
               <Check className="h-4 w-4 text-green-500" />
-              No hidden fees
-            </span>
-            <span className="flex items-center gap-1">
-              <Check className="h-4 w-4 text-green-500" />
-              24/7 support
+              Upgrade only when ready
             </span>
           </div>
         </div>

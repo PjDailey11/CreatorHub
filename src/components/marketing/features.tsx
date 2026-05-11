@@ -16,48 +16,48 @@ const features = [
   {
     icon: Users,
     title: 'Subscriber Management',
-    description: 'Track and manage all your subscribers in one place. Monitor tiers, spending habits, and engagement levels.',
-    badge: 'Core',
+    description: 'See tier, spend, source, and recent activity in one place so you know exactly who needs attention next.',
+    badge: 'Retention',
     color: 'from-pink-500 to-rose-500',
     shadowColor: 'shadow-pink-500/20',
   },
   {
     icon: GitBranch,
     title: 'DM Funnels',
-    description: 'Automate your welcome messages and engagement sequences. Set triggers and let the funnels work 24/7.',
-    badge: 'Popular',
+    description: 'Automate welcomes, follow-ups, and win-back messages based on subscriber actions instead of sending every message by hand.',
+    badge: 'Automation',
     color: 'from-purple-500 to-indigo-500',
     shadowColor: 'shadow-purple-500/20',
   },
   {
     icon: DollarSign,
     title: 'PPV Price Optimizer',
-    description: 'AI-powered pricing recommendations based on subscriber tier, engagement, and spending history.',
-    badge: 'AI Powered',
+    description: 'Get price recommendations by subscriber segment so you can test smarter offers instead of using one flat PPV price.',
+    badge: 'Revenue',
     color: 'from-green-500 to-emerald-500',
     shadowColor: 'shadow-green-500/20',
   },
   {
     icon: BarChart3,
     title: 'Advanced Analytics',
-    description: 'Track revenue, growth trends, and content performance. Know where your best subscribers come from.',
-    badge: 'Insights',
+    description: 'Track revenue, renewals, and content lift in one view so you can see which actions are actually paying off.',
+    badge: 'Visibility',
     color: 'from-blue-500 to-cyan-500',
     shadowColor: 'shadow-blue-500/20',
   },
   {
     icon: TrendingUp,
     title: 'Source Attribution',
-    description: 'Track which platforms drive the most valuable subscribers. Optimize your marketing spend.',
-    badge: 'Growth',
+    description: 'Measure which links, promos, and channels bring in paying subscribers instead of guessing where growth came from.',
+    badge: 'Acquisition',
     color: 'from-orange-500 to-amber-500',
     shadowColor: 'shadow-orange-500/20',
   },
   {
     icon: Shield,
     title: 'Privacy First',
-    description: 'Your data is encrypted and secure. We never share your information with third parties.',
-    badge: 'Secure',
+    description: 'Creator data stays encrypted in transit and at rest, with account controls that keep sensitive subscriber info protected.',
+    badge: 'Trust',
     color: 'from-slate-500 to-gray-500',
     shadowColor: 'shadow-slate-500/20',
   },
@@ -76,17 +76,18 @@ export function Features() {
         <div className="text-center mb-16">
           <Badge className="mb-5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 dark:from-pink-500/20 dark:to-purple-500/20 text-pink-600 dark:text-pink-400 border-pink-200/50 dark:border-pink-800/50 px-5 py-2 text-sm font-medium">
             <Zap className="h-4 w-4 mr-2" />
-            Powerful Features
+            Core workflows
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-gray-900 dark:text-white">
-            Everything You Need to{' '}
+            The tools creators actually use to{' '}
             <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              Scale Your Business
+              keep revenue moving
             </span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
-            CreatorHub provides all the tools you need to manage subscribers, 
-            automate engagement, and maximize your revenue.
+            Every module answers a real operating question: who to follow up with,
+            what to charge, where subscribers came from, and which revenue signals
+            are improving.
           </p>
         </div>
 

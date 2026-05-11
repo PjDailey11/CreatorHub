@@ -12,72 +12,72 @@ import {
   Zap,
   Users,
   CreditCard,
-  Sparkles,
+  Clock3,
   Lock
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const faqCategories = [
   { id: 'all', label: 'All Questions', icon: HelpCircle },
-  { id: 'pricing', label: 'Pricing & Plans', icon: DollarSign },
-  { id: 'features', label: 'Features', icon: Zap },
-  { id: 'security', label: 'Security', icon: Shield },
+  { id: 'setup', label: 'Setup & Import', icon: Clock3 },
+  { id: 'billing', label: 'Plans & Billing', icon: CreditCard },
+  { id: 'security', label: 'Security & Data', icon: Shield },
 ]
 
 const faqs = [
   {
-    question: 'How does the PPV price optimizer work?',
-    answer: 'Our AI analyzes each subscriber\'s tier, engagement level, spending history, and other factors to recommend optimal PPV prices. Higher-value subscribers see higher recommended prices, maximizing your revenue while maintaining engagement.',
-    category: 'features',
-    icon: Sparkles,
+    question: 'How long does setup usually take?',
+    answer: 'Most creators can create an account, import a CSV, and publish a first welcome flow in one sitting. You can start simple, then add segments and reporting as your workflow gets sharper.',
+    category: 'setup',
+    icon: Clock3,
     gradient: 'from-purple-500 to-pink-500',
   },
   {
-    question: 'Can I import my existing subscribers?',
-    answer: 'Yes! You can manually add subscribers or use our bulk import feature. We support CSV imports and are working on direct OnlyFans API integration.',
-    category: 'features',
+    question: 'Can I import my current subscriber list?',
+    answer: 'Yes. You can bring in subscribers with CSV import, then organize them by spend, tier, or lifecycle stage so you are not rebuilding your workflow from scratch.',
+    category: 'setup',
     icon: Users,
     gradient: 'from-blue-500 to-cyan-500',
   },
   {
-    question: 'How do DM funnels work?',
-    answer: 'DM funnels are automated message sequences triggered by specific actions like new subscriptions, bio link clicks, or incoming DMs. You create the sequence once, and it runs automatically for each subscriber who triggers it.',
-    category: 'features',
+    question: 'What can I automate with DM funnels?',
+    answer: 'DM funnels can handle welcome sequences, follow-ups, re-engagement, and other triggered messages based on actions like new subscriptions, clicks, or inactivity. You define the logic once, then let the sequence handle the repetitive work.',
+    category: 'setup',
     icon: MessageSquare,
     gradient: 'from-green-500 to-emerald-500',
   },
   {
-    question: 'Is my data secure?',
-    answer: 'Absolutely. We use industry-standard encryption for all data at rest and in transit. We never share your data with third parties, and you can delete your account and all associated data at any time.',
-    category: 'security',
-    icon: Lock,
+    question: 'How does PPV pricing guidance work?',
+    answer: 'CreatorHub looks at subscriber tier, engagement, and spend history to suggest smarter PPV price ranges. It gives you a better starting point than a one-price-for-everyone approach.',
+    category: 'setup',
+    icon: DollarSign,
     gradient: 'from-red-500 to-orange-500',
   },
   {
-    question: 'Can I cancel my subscription anytime?',
-    answer: 'Yes, you can cancel your subscription at any time with no cancellation fees. Your access continues until the end of your current billing period.',
-    category: 'pricing',
+    question: 'Do I need a credit card to start?',
+    answer: 'No. Every new account begins with a 14-day Pro trial and you can explore the product before entering billing details.',
+    category: 'billing',
     icon: CreditCard,
     gradient: 'from-amber-500 to-yellow-500',
   },
   {
-    question: 'Do you offer a free trial?',
-    answer: 'Yes! All new accounts start with a 14-day free trial of our Pro plan. No credit card required to get started.',
-    category: 'pricing',
+    question: 'Can I cancel or change plans anytime?',
+    answer: 'Yes. You can upgrade, downgrade, or cancel whenever your needs change. Your access stays active through the end of the current billing period.',
+    category: 'billing',
     icon: Zap,
     gradient: 'from-violet-500 to-purple-500',
   },
   {
-    question: 'What makes CreatorHub different from other tools?',
-    answer: 'CreatorHub is built specifically for OnlyFans creators. Our AI-powered features like PPV optimization and automated source attribution help you maximize revenue while saving time on manual tasks.',
-    category: 'features',
-    icon: Sparkles,
+    question: 'Is creator data secure?',
+    answer: 'We use encryption for data at rest and in transit, and we do not sell or share your creator data with third parties. You can also delete your account and associated data whenever needed.',
+    category: 'security',
+    icon: Lock,
     gradient: 'from-pink-500 to-rose-500',
   },
   {
-    question: 'Can I use CreatorHub for multiple accounts?',
-    answer: 'Our Agency plan supports multiple account management. You can manage up to 10 creator accounts from a single dashboard, perfect for agencies and managers.',
-    category: 'pricing',
+    question: 'Can agencies or managers use CreatorHub?',
+    answer: 'Yes. The Agency plan is designed for multi-account management, shared visibility, and teams handling more than one creator workflow.',
+    category: 'billing',
     icon: Users,
     gradient: 'from-indigo-500 to-blue-500',
   },
@@ -106,14 +106,14 @@ export function FAQ() {
               FAQ
             </Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-gray-900 dark:text-white">
-              Frequently Asked{' '}
+              Questions creators ask{' '}
               <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-                Questions
+                before they start
               </span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
-              Got questions? We&apos;ve got answers. If you don&apos;t see what you&apos;re looking for, 
-              reach out to our support team.
+              The biggest blockers are usually setup time, billing clarity, and trust.
+              Here are the answers buyers want before they commit.
             </p>
           </div>
 
@@ -216,39 +216,20 @@ export function FAQ() {
 
           {/* Bottom contact card */}
           <div className="mt-16 flex justify-center">
-            <div className="relative">
-              <div className="flex items-center gap-5 px-8 py-5 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-                <div className="flex -space-x-3">
-                  {[...Array(4)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'w-12 h-12 rounded-full border-3 border-white dark:border-gray-800 flex items-center justify-center text-white text-lg font-bold shadow-lg',
-                        i === 0 && 'bg-gradient-to-br from-pink-400 to-pink-600',
-                        i === 1 && 'bg-gradient-to-br from-purple-400 to-purple-600',
-                        i === 2 && 'bg-gradient-to-br from-blue-400 to-blue-600',
-                        i === 3 && 'bg-gradient-to-br from-green-400 to-green-600',
-                      )}
-                    >
-                      {['🎨', '💬', '📊', '🚀'][i]}
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white text-lg">Still have questions?</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Our support team is here to help 24/7</p>
-                </div>
-                <button 
-                  onClick={() => setIsContactOpen(true)}
-                  className="ml-4 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-bold hover:shadow-xl hover:shadow-pink-500/30 transition-all duration-300 hover:scale-105"
-                >
-                  Contact Us
-                </button>
+            <div className="w-full max-w-3xl rounded-3xl border border-gray-200 bg-white/90 p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800/90 sm:flex sm:items-center sm:justify-between sm:gap-6">
+              <div className="max-w-xl">
+                <p className="text-lg font-bold text-gray-900 dark:text-white">Need an answer before you sign up?</p>
+                <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Tell us how you manage subscribers today and we&apos;ll help you figure out which plan and workflow make sense first.
+                </p>
               </div>
-              
-              {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 w-8 h-8 bg-yellow-400 rounded-xl rotate-12 animate-bounce shadow-lg" style={{ animationDelay: '0.1s', animationDuration: '3s' }} />
-              <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-pink-400 rounded-full animate-bounce shadow-lg" style={{ animationDelay: '0.3s', animationDuration: '4s' }} />
+              <button 
+                  type="button"
+                  onClick={() => setIsContactOpen(true)}
+                  className="mt-5 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-3 font-bold text-white transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/30 sm:mt-0"
+                >
+                  Ask Support
+                </button>
             </div>
           </div>
         </div>
