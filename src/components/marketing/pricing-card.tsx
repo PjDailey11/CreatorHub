@@ -5,13 +5,14 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge'
 import { Check, Loader2, Sparkles } from 'lucide-react'
 import { useCheckout } from '@/hooks/use-checkout'
-import { PricingPlan } from '@/lib/pricing'
+import { PRICING_COPY, PricingPlan } from '@/lib/pricing'
 
 interface PricingCardProps {
   planKey: PricingPlan
   name: string
   price: number
   features: readonly string[]
+  description?: string
   isPopular?: boolean
   billingLabel?: string
 }
@@ -21,6 +22,7 @@ export function PricingCard({
   name,
   price,
   features,
+  description,
   isPopular = false,
   billingLabel = '/month',
 }: PricingCardProps) {
@@ -46,6 +48,11 @@ export function PricingCard({
 
       <CardHeader className="text-center pb-2 pt-8">
         <CardTitle className="text-2xl">{name}</CardTitle>
+        {description ? (
+          <p className="mt-3 min-h-12 text-sm leading-6 text-gray-500 dark:text-gray-400">
+            {description}
+          </p>
+        ) : null}
         <div className="mt-4">
           <span className="text-5xl font-bold">${price}</span>
           <span className="text-gray-500">{billingLabel}</span>
@@ -76,9 +83,12 @@ export function PricingCard({
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Start Free Trial
+          {PRICING_COPY.primaryCtaLabel}
         </Button>
       </CardFooter>
+      <div className="px-6 pb-6 pt-0 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+        {PRICING_COPY.noCardRequiredLabel}
+      </div>
     </Card>
   )
 }

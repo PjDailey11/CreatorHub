@@ -12,9 +12,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "CreatorHub - Grow Your OnlyFans Empire",
+  title: "CreatorHub - CRM and workflow software for subscription creators",
   description:
-    "The all-in-one platform to manage subscribers, automate DM funnels, optimize PPV pricing, and track your content performance.",
+    "Independent CRM and workflow software for subscription creators. Import subscriber data, organize follow-up workflows, review pricing guidance, and track performance.",
 };
 
 export default async function RootLayout({

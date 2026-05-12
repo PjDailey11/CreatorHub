@@ -1,9 +1,70 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, DollarSign, MessageSquare, ShieldCheck, Sparkles, Star, TrendingUp, Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { PRICING_COPY } from '@/lib/pricing'
+import {
+  ArrowRight,
+  DollarSign,
+  MessageSquare,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
+
+const trustChips = [
+  'Built for creators and managers',
+  'CSV import supported',
+  'Independent workflow workspace',
+]
+
+const previewCards = [
+  {
+    icon: Users,
+    label: 'Subscriber segments',
+    value: 'VIP, warm, and at-risk fans',
+    detail: 'Prioritize follow-up without guesswork',
+    bg: 'from-emerald-500/10 to-green-500/5 dark:from-emerald-500/20 dark:to-green-500/10',
+  },
+  {
+    icon: MessageSquare,
+    label: 'DM workflows',
+    value: 'Welcome, re-engage, and upsell flows',
+    detail: 'Automate the moments that usually slip',
+    bg: 'from-pink-500/10 to-rose-500/5 dark:from-pink-500/20 dark:to-rose-500/10',
+  },
+  {
+    icon: DollarSign,
+    label: 'PPV testing',
+    value: 'Compare offers by segment',
+    detail: 'See which sends deserve another round',
+    bg: 'from-purple-500/10 to-violet-500/5 dark:from-purple-500/20 dark:to-violet-500/10',
+  },
+  {
+    icon: TrendingUp,
+    label: 'Source attribution',
+    value: 'Know which channels convert',
+    detail: 'Keep your best acquisition loops visible',
+    bg: 'from-amber-500/10 to-yellow-500/5 dark:from-amber-500/20 dark:to-yellow-500/10',
+  },
+]
+
+const previewQueue = [
+  {
+    title: 'New subscriber',
+    status: 'Welcome workflow ready',
+  },
+  {
+    title: 'High-intent fan',
+    status: 'PPV test queued',
+  },
+  {
+    title: 'Cooling off',
+    status: 'Re-engagement follow-up ready',
+  },
+]
 
 export function Hero() {
   return (
@@ -49,13 +110,13 @@ export function Hero() {
             <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 bg-[length:200%_auto] animate-gradient bg-clip-text text-transparent">
               less manual work
             </span>{' '}
-            and more repeat revenue
+            and clearer subscriber signal
           </h1>
 
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            CreatorHub gives OnlyFans creators one place to automate welcome DMs,
-            segment high-value subscribers, test PPV pricing, and see what actually
-            drives conversions.
+            CreatorHub helps subscription creators and managers organize subscriber
+            context, plan follow-up workflows, test PPV pricing, and see which
+            operating moves are worth repeating.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -64,7 +125,7 @@ export function Hero() {
                 size="lg"
                 className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-lg px-10 py-7 shadow-2xl shadow-pink-500/30 hover:shadow-pink-500/50 transition-all duration-300 hover:scale-105 group font-semibold rounded-full"
               >
-                Start Free Trial
+                {PRICING_COPY.primaryCtaLabel}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -74,10 +135,16 @@ export function Hero() {
                 variant="outline"
                 className="text-lg px-10 py-7 rounded-full border-gray-300 bg-white/80 hover:bg-white dark:border-gray-700 dark:bg-gray-900/70 dark:hover:bg-gray-900"
               >
-                See Pricing
+                {PRICING_COPY.secondaryCtaLabel}
               </Button>
             </Link>
           </div>
+
+          <p className="mx-auto mt-5 max-w-3xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            CreatorHub is an independent workspace, not an official OnlyFans
+            integration. Teams typically work from CSV imports plus manual
+            platform-side execution.
+          </p>
 
           <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-2">
@@ -86,48 +153,33 @@ export function Hero() {
             </span>
             <span className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-green-500" />
-              No credit card required
+              {PRICING_COPY.noCardRequiredLabel}
             </span>
             <span className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-green-500" />
-              Import help included
+              {PRICING_COPY.importHelpLabel}
             </span>
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-3 text-sm">
-            {[
-              {
-                icon: Users,
-                copy: '1,000+ active creators',
-              },
-              {
-                icon: MessageSquare,
-                copy: '10M+ messages automated',
-              },
-              {
-                icon: TrendingUp,
-                copy: '$2.5M+ revenue managed',
-              },
-            ].map((proof) => {
-              const Icon = proof.icon
-
-              return (
-                <div
-                  key={proof.copy}
-                  className="flex items-center gap-2 rounded-full border border-gray-200/70 bg-white/90 px-5 py-2.5 shadow-lg dark:border-gray-700/70 dark:bg-gray-800/90"
-                >
-                  <Icon className="h-4 w-4 text-pink-500" />
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{proof.copy}</span>
-                </div>
-              )
-            })}
+            {trustChips.map((chip) => (
+              <div
+                key={chip}
+                className="flex items-center gap-2 rounded-full border border-gray-200/70 bg-white/90 px-5 py-2.5 shadow-lg dark:border-gray-700/70 dark:bg-gray-800/90"
+              >
+                <span className="font-semibold text-gray-700 dark:text-gray-300">{chip}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Dashboard preview */}
         <div className="mt-20 relative">
-          <p className="mb-4 text-center text-sm font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-            See who is buying, cooling off, and ready for the next offer
+          <p className="mb-2 text-center text-sm font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+            Illustrative product preview
+          </p>
+          <p className="mb-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            Example workflow view only, not live customer data.
           </p>
           <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent z-10 pointer-events-none h-full" />
           <div className="rounded-3xl border-2 border-gray-200/50 dark:border-gray-800/50 shadow-2xl overflow-hidden bg-white dark:bg-gray-900 mx-auto max-w-5xl">
@@ -145,24 +197,21 @@ export function Hero() {
               </div>
             </div>
             <div className="p-8 bg-gradient-to-br from-gray-50/50 to-white dark:from-gray-900 dark:to-gray-950">
-              <div className="grid gap-5 md:grid-cols-4 mb-6">
-                {[
-                  { label: 'Total Subscribers', value: '2,847', trend: '+12%', color: 'text-emerald-500', icon: Users, bg: 'from-emerald-500/10 to-green-500/5 dark:from-emerald-500/20 dark:to-green-500/10' },
-                  { label: 'Monthly Revenue', value: '$12,450', trend: '+23%', color: 'text-emerald-500', icon: DollarSign, bg: 'from-pink-500/10 to-rose-500/5 dark:from-pink-500/20 dark:to-rose-500/10' },
-                  { label: 'Churn Rate', value: '2.3%', trend: '-0.5%', color: 'text-emerald-500', icon: TrendingUp, bg: 'from-purple-500/10 to-violet-500/5 dark:from-purple-500/20 dark:to-violet-500/10' },
-                  { label: 'Avg LTV', value: '$89.50', trend: '+8%', color: 'text-emerald-500', icon: Star, bg: 'from-amber-500/10 to-yellow-500/5 dark:from-amber-500/20 dark:to-yellow-500/10' },
-                ].map((stat) => {
-                  const Icon = stat.icon
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4 mb-6">
+                {previewCards.map((card) => {
+                  const Icon = card.icon
                   return (
-                    <div key={stat.label} className={`bg-gradient-to-br ${stat.bg} rounded-2xl p-5 border border-gray-100 dark:border-gray-800`}>
+                    <div key={card.label} className={`bg-gradient-to-br ${card.bg} rounded-2xl p-5 border border-gray-100 dark:border-gray-800`}>
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{stat.label}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{card.label}</p>
                         <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center">
                           <Icon className="h-5 w-5 text-gray-400" />
                         </div>
                       </div>
-                      <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{stat.value}</p>
-                      <p className={`text-sm ${stat.color} font-semibold mt-1`}>{stat.trend} this month</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">{card.value}</p>
+                      <p className="mt-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        {card.detail}
+                      </p>
                     </div>
                   )
                 })}
@@ -170,32 +219,34 @@ export function Hero() {
               <div className="grid gap-5 md:grid-cols-3">
                 <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 h-48">
                   <div className="flex items-center justify-between mb-6">
-                    <span className="text-base font-bold text-gray-800 dark:text-white">Revenue Overview</span>
-                    <span className="text-sm text-gray-400 font-medium">Last 7 days</span>
+                    <span className="text-base font-bold text-gray-800 dark:text-white">Workflow coverage</span>
+                    <span className="text-sm text-gray-400 font-medium">Illustrative view</span>
                   </div>
                   <div className="flex items-end justify-between h-28 px-2">
-                    {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2">
+                    {[72, 54, 65, 48, 58, 43, 62].map((height, index) => (
+                      <div key={index} className="flex flex-col items-center gap-2">
                         <div 
                           className="w-8 bg-gradient-to-t from-pink-500 to-purple-400 rounded-lg shadow-sm"
-                          style={{ height: `${h}%` }}
+                          style={{ height: `${height}%` }}
                         />
-                        <span className="text-xs text-gray-400 font-medium">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
+                        <span className="text-xs text-gray-400 font-medium">
+                          {['DM', 'Seg', 'PPV', 'Src', 'CRM', 'Ret', 'Ops'][index]}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 h-48">
-                  <span className="text-base font-bold text-gray-800 dark:text-white">Top Subscribers</span>
+                  <span className="text-base font-bold text-gray-800 dark:text-white">Priority queue</span>
                   <div className="mt-4 space-y-3">
-                    {['Premium Fan', 'Super Supporter', 'Loyal Member'].map((name, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 border border-gray-100 dark:border-gray-600">
+                    {previewQueue.map((item) => (
+                      <div key={item.title} className="flex items-center gap-3 p-2.5 rounded-xl bg-gradient-to-r from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 border border-gray-100 dark:border-gray-600">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
-                          {i + 1}
+                          <MessageSquare className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{name}</p>
-                          <p className="text-xs text-gray-400">${(150 - i * 30).toFixed(2)} spent</p>
+                          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{item.title}</p>
+                          <p className="text-xs text-gray-400">{item.status}</p>
                         </div>
                       </div>
                     ))}

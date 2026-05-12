@@ -1,19 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Check, CreditCard, Sparkles, ArrowRight } from 'lucide-react'
-import { PRICING_PLANS } from '@/lib/pricing'
-
-const planOrder = ['starter', 'pro', 'agency'] as const
-
-const planDescriptions = {
-  starter: 'For solo creators getting organized before complexity piles up.',
-  pro: 'For growing creators who want funnels, pricing signals, and better retention.',
-  agency: 'For managers running multiple creator accounts with shared visibility.',
-} as const
+import {
+  POPULAR_PRICING_PLAN,
+  PRICING_COPY,
+  PRICING_PLAN_ORDER,
+  PRICING_PLANS,
+} from '@/lib/pricing'
+import { ArrowRight, Check, CreditCard, Sparkles } from 'lucide-react'
 
 export function PricingPreview() {
   return (
@@ -32,19 +29,18 @@ export function PricingPreview() {
           <h2 className="text-4xl md:text-5xl font-bold mb-5 tracking-tight text-gray-900 dark:text-white">
             Start small. Upgrade when the workflow{' '}
             <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              pays for itself
+              feels worth keeping
             </span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium">
-            Every account starts with a 14-day Pro trial, so you can test automation,
-            pricing, and reporting before you decide what plan fits.
+            {PRICING_COPY.pricingPreviewSummary}
           </p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
-          {planOrder.map((planKey, index) => {
+          {PRICING_PLAN_ORDER.map((planKey, index) => {
             const plan = PRICING_PLANS[planKey]
-            const isPopular = planKey === 'pro'
+            const isPopular = planKey === POPULAR_PRICING_PLAN
 
             return (
               <Card
@@ -60,7 +56,7 @@ export function PricingPreview() {
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-1.5 shadow-lg">
                       <Sparkles className="h-3 w-3 mr-1" />
-                      Most Popular
+                      Recommended starting point
                     </Badge>
                   </div>
                 )}
@@ -73,7 +69,7 @@ export function PricingPreview() {
                 <CardHeader className="text-center pb-2 pt-8">
                   <CardTitle className="text-2xl text-gray-900 dark:text-white">{plan.name}</CardTitle>
                   <p className="mt-3 min-h-12 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                    {planDescriptions[planKey]}
+                    {plan.description}
                   </p>
                   <div className="mt-4">
                     <span className="text-5xl font-bold text-gray-900 dark:text-white">${plan.price}</span>
@@ -104,12 +100,12 @@ export function PricingPreview() {
                             : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'
                         }`}
                       >
-                        {isPopular ? 'Try Pro Free' : 'Start Free Trial'}
+                        {PRICING_COPY.primaryCtaLabel}
                         <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </Link>
                     <p className="mt-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                      No credit card required to start.
+                      {PRICING_COPY.noCardRequiredLabel}
                     </p>
                   </div>
                 </CardFooter>
@@ -120,7 +116,7 @@ export function PricingPreview() {
 
         <div className="text-center mt-12">
           <p className="text-gray-500 dark:text-gray-400 font-medium">
-            Start on Pro, then switch plans when you know what volume and automation you actually need.
+            {PRICING_COPY.pricingFooterSummary}
           </p>
           <div className="flex items-center justify-center gap-6 mt-4 text-sm text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">
@@ -129,11 +125,11 @@ export function PricingPreview() {
             </span>
             <span className="flex items-center gap-1">
               <Check className="h-4 w-4 text-green-500" />
-              Cancel anytime
+              {PRICING_COPY.cancelAnytimeLabel}
             </span>
             <span className="flex items-center gap-1">
               <Check className="h-4 w-4 text-green-500" />
-              Upgrade only when ready
+              {PRICING_COPY.chooseWhenReadyLabel}
             </span>
           </div>
         </div>

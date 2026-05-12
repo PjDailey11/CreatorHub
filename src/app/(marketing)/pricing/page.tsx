@@ -1,38 +1,17 @@
-'use client'
-
-import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Check, X, CreditCard, Sparkles, ArrowRight } from 'lucide-react'
-import { PRICING_PLANS } from '@/lib/pricing'
-
-const planOrder = ['starter', 'pro', 'agency'] as const
-
-const comparisonFeatures = [
-  { name: 'Subscribers', starter: 'Up to 500', pro: 'Up to 5,000', agency: 'Unlimited' },
-  { name: 'DM Funnels', starter: '3 active', pro: 'Unlimited', agency: 'Unlimited' },
-  { name: 'Analytics', starter: 'Basic', pro: 'Advanced', agency: 'White-label' },
-  { name: 'PPV Recommendations', starter: true, pro: true, agency: true },
-  { name: 'AI-Powered Optimization', starter: false, pro: true, agency: true },
-  { name: 'Source Attribution', starter: false, pro: true, agency: true },
-  { name: 'Multi-Account Management', starter: false, pro: false, agency: true },
-  { name: 'API Access', starter: false, pro: false, agency: true },
-  { name: 'Support', starter: 'Email', pro: 'Priority', agency: 'Dedicated Manager' },
-  { name: 'Custom Integrations', starter: false, pro: false, agency: true },
-]
+import { PricingCard } from '@/components/marketing/pricing-card'
+import {
+  POPULAR_PRICING_PLAN,
+  PRICING_COMPARISON_ROWS,
+  PRICING_COPY,
+  PRICING_PLAN_ORDER,
+  PRICING_PLANS,
+} from '@/lib/pricing'
+import { Check, CreditCard, X } from 'lucide-react'
 
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
-
-  const getPrice = (basePrice: number) => {
-    if (billingPeriod === 'yearly') {
-      return Math.round(basePrice * 10) // 2 months free on yearly
-    }
-    return basePrice
-  }
-
   return (
     <div className="py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="container mx-auto px-4">
@@ -45,114 +24,28 @@ export default function PricingPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-5 text-gray-900 dark:text-white">
             Choose the{' '}
             <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              Perfect Plan
+              plan that fits
             </span>
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
-            Start with a 14-day free trial. No credit card required. 
-            Upgrade, downgrade, or cancel anytime.
+            {PRICING_COPY.pricingPageSummary}
           </p>
-
-          {/* Billing toggle */}
-          <div className="inline-flex items-center gap-1 p-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <button
-              onClick={() => setBillingPeriod('monthly')}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                billingPeriod === 'monthly'
-                  ? 'bg-white dark:bg-gray-700 shadow-md text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingPeriod('yearly')}
-              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center ${
-                billingPeriod === 'yearly'
-                  ? 'bg-white dark:bg-gray-700 shadow-md text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Yearly
-              <Badge className="ml-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs">Save 17%</Badge>
-            </button>
-          </div>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto mb-20">
-          {planOrder.map((planKey, index) => {
+          {PRICING_PLAN_ORDER.map((planKey) => {
             const plan = PRICING_PLANS[planKey]
-            const isPopular = planKey === 'pro'
-            const price = getPrice(plan.price)
-
             return (
-              <Card
+              <PricingCard
                 key={planKey}
-                className={`relative flex flex-col transition-all duration-500 hover:-translate-y-2 ${
-                  isPopular
-                    ? 'border-2 border-pink-500 dark:border-pink-400 shadow-2xl shadow-pink-500/20 scale-105 z-10 bg-white dark:bg-gray-800'
-                    : 'border border-gray-200 dark:border-gray-700 shadow-xl bg-white dark:bg-gray-800/50'
-                }`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-1.5 shadow-lg">
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
-
-                {isPopular && (
-                  <div className="h-1 bg-gradient-to-r from-pink-500 to-purple-600" />
-                )}
-
-                <CardHeader className="text-center pb-2 pt-8">
-                  <CardTitle className="text-2xl text-gray-900 dark:text-white">{plan.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-5xl font-bold text-gray-900 dark:text-white">${price}</span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      /{billingPeriod === 'yearly' ? 'year' : 'month'}
-                    </span>
-                  </div>
-                  {billingPeriod === 'yearly' && (
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-1 font-medium">
-                      ${plan.price * 2} savings per year
-                    </p>
-                  )}
-                </CardHeader>
-
-                <CardContent className="flex-1 pt-6">
-                  <ul className="space-y-4">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full ${isPopular ? 'bg-gradient-to-r from-pink-500 to-purple-600' : 'bg-green-500'} flex items-center justify-center mt-0.5`}>
-                          <Check className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-gray-600 dark:text-gray-300">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-
-                <CardFooter className="pt-6">
-                  <Link href="/signup" className="w-full">
-                    <Button
-                      size="lg"
-                      className={`w-full py-6 font-semibold group ${
-                        isPopular
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25'
-                          : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'
-                      }`}
-                    >
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
+                planKey={planKey}
+                name={plan.name}
+                description={plan.description}
+                price={plan.price}
+                features={plan.features}
+                isPopular={planKey === POPULAR_PRICING_PLAN}
+              />
             )
           })}
         </div>
@@ -172,19 +65,19 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {comparisonFeatures.map((feature, index) => (
+                {PRICING_COMPARISON_ROWS.map((feature, index) => (
                   <tr 
-                    key={feature.name} 
+                    key={feature.key} 
                     className={`border-b border-gray-100 dark:border-gray-800 ${
                       index % 2 === 0 ? 'bg-white dark:bg-gray-900/50' : 'bg-gray-50/50 dark:bg-gray-800/30'
                     }`}
                   >
-                    <td className="py-4 px-6 text-gray-700 dark:text-gray-300 font-medium">{feature.name}</td>
-                    {['starter', 'pro', 'agency'].map((plan) => {
-                      const value = feature[plan as keyof typeof feature]
-                      const isPro = plan === 'pro'
+                    <td className="py-4 px-6 text-gray-700 dark:text-gray-300 font-medium">{feature.label}</td>
+                    {PRICING_PLAN_ORDER.map((planKey) => {
+                      const value = PRICING_PLANS[planKey].comparison[feature.key]
+                      const isPro = planKey === POPULAR_PRICING_PLAN
                       return (
-                        <td key={plan} className={`py-4 px-6 text-center ${isPro ? 'bg-pink-50/30 dark:bg-pink-900/5' : ''}`}>
+                        <td key={planKey} className={`py-4 px-6 text-center ${isPro ? 'bg-pink-50/30 dark:bg-pink-900/5' : ''}`}>
                           {typeof value === 'boolean' ? (
                             value ? (
                               <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
@@ -221,8 +114,10 @@ export default function PricingPage() {
                 View FAQ
               </Button>
             </Link>
-            <Button variant="ghost" size="lg" className="dark:text-gray-300 dark:hover:bg-gray-800">
-              Contact Support
+            <Button asChild variant="ghost" size="lg" className="dark:text-gray-300 dark:hover:bg-gray-800">
+              <Link href="/contact">
+                Contact Support
+              </Link>
             </Button>
           </div>
         </div>

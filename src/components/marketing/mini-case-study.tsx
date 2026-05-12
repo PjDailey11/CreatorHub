@@ -6,35 +6,35 @@ const workflow = [
   {
     title: 'Before CreatorHub',
     description:
-      'Subscriber notes lived in spreadsheets, welcome messages were manual, and PPV pricing was mostly guesswork.',
+      'Subscriber notes live in spreadsheets, welcome follow-up is manual, and pricing decisions are hard to review across a team.',
   },
   {
-    title: 'Week 1',
+    title: 'First setup',
     description:
-      'The team imported subscribers, launched one welcome funnel, and created simple spend-based segments for follow-up.',
+      'Import subscribers, launch one welcome or re-engagement flow, and define the segments you want to watch first.',
   },
   {
-    title: 'By day 30',
+    title: 'What the product is designed to help with',
     description:
-      'Instead of chasing admin work, they could see who was warming up, what offers were converting, and where repeat spend came from.',
+      'Clearer subscriber context, fewer missed follow-ups, and offer decisions you can revisit instead of relying on memory.',
   },
 ]
 
 const outcomes = [
   {
     icon: Clock3,
-    label: 'Manual follow-up reduced',
-    value: '10+ hrs/week saved',
+    label: 'Manual follow-up',
+    value: 'Designed to reduce repetitive inbox work',
   },
   {
     icon: DollarSign,
-    label: 'PPV revenue lifted',
-    value: '+$2,400/month',
+    label: 'Offer testing',
+    value: 'Designed to make PPV decisions easier to compare',
   },
   {
     icon: MessageSquareMore,
-    label: 'Welcome flow retention',
-    value: '-32% churn',
+    label: 'Retention visibility',
+    value: 'Designed to surface cooling-off subscribers sooner',
   },
 ]
 
@@ -45,19 +45,19 @@ export function MiniCaseStudy() {
         <div className="mx-auto max-w-6xl rounded-[2rem] border border-gray-200/70 bg-white/90 p-8 shadow-2xl shadow-pink-500/10 backdrop-blur-sm dark:border-gray-800/80 dark:bg-gray-900/80 md:p-12">
           <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
             <div>
-              <Badge className="mb-5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-600 dark:from-pink-500/20 dark:to-purple-500/20 dark:text-pink-400 border-pink-200/50 dark:border-pink-800/50 px-5 py-2 text-sm font-medium">
+              <Badge className="mb-5 border-pink-200/50 bg-gradient-to-r from-pink-500/10 to-purple-500/10 px-5 py-2 text-sm font-medium text-pink-600 dark:border-pink-800/50 dark:from-pink-500/20 dark:to-purple-500/20 dark:text-pink-400">
                 <BarChart3 className="mr-2 h-4 w-4" />
-                Mini case study
+                Product workflow
               </Badge>
 
               <h2 className="max-w-3xl text-4xl font-bold tracking-tight text-gray-900 dark:text-white md:text-5xl">
-                What switching from spreadsheets can look like in 30 days
+                What switching from spreadsheets is meant to feel like
               </h2>
 
               <p className="mt-5 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-                The first win is usually not a bigger dashboard. It&apos;s a tighter operating loop:
-                less manual follow-up, cleaner subscriber context, and pricing decisions that come from
-                segments instead of guesswork.
+                This is not a public case study. It is the workflow pattern
+                CreatorHub is built around: less spreadsheet handoff, cleaner
+                follow-up, and pricing decisions that are easier to revisit.
               </p>
 
               <div className="mt-8 space-y-4">
@@ -105,8 +105,8 @@ export function MiniCaseStudy() {
               })}
 
               <div className="rounded-2xl border border-dashed border-pink-300/70 bg-pink-50/70 p-6 text-sm leading-relaxed text-gray-600 dark:border-pink-800/70 dark:bg-pink-950/20 dark:text-gray-300">
-                Creator-reported outcomes vary by audience size, pricing strategy, and offer quality, but
-                the pattern is consistent: better follow-up beats more manual hustle.
+                Public case studies can live here later once customers approve named
+                quotes, screenshots, and outcome data for public use.
               </div>
             </div>
           </div>
