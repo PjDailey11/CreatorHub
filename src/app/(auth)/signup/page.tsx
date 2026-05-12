@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,11 +17,16 @@ import {
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { buildAuthCallbackUrl } from '@/lib/auth/urls'
+import {
+  buildAuthCallbackUrl,
+  resolvePostAuthPath,
+} from '@/lib/auth/urls'
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+  const nextPath = resolvePostAuthPath(searchParams.get('next'))
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -60,7 +65,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(),
+        emailRedirectTo: buildAuthCallbackUrl({ next: nextPath }),
         data: { full_name: fullName },
       },
     })
@@ -111,7 +116,7 @@ export default function SignupPage() {
 
     // If email confirmation is OFF in Supabase, the user is signed in immediately
     if (data.session) {
-      router.push('/dashboard')
+      router.replace(nextPath)
       router.refresh()
       return
     }
@@ -131,7 +136,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: buildAuthCallbackUrl(),
+        redirectTo: buildAuthCallbackUrl({ next: nextPath }),
       },
     })
 

@@ -1,5 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { resolvePostAuthPath } from '@/lib/auth/urls'
+
+const PROTECTED_PATHS = [
+  '/dashboard',
+  '/profile',
+  '/settings',
+  '/subscribers',
+  '/funnels',
+  '/ppv',
+  '/analytics',
+]
+
+const AUTH_PAGES = ['/login', '/signup']
+
+function matchesPath(pathname: string, paths: string[]) {
+  return paths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  )
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -40,27 +59,25 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/funnels', '/subscribers', '/ppv', '/analytics', '/settings']
-  const isProtectedPath = protectedPaths.some(path =>
-    request.nextUrl.pathname.startsWith(path)
-  )
+  const pathname = request.nextUrl.pathname
+  const isProtectedPath = matchesPath(pathname, PROTECTED_PATHS)
 
   if (isProtectedPath && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    const nextPath = `${pathname}${request.nextUrl.search}`
+    url.searchParams.set('next', nextPath)
     return NextResponse.redirect(url)
   }
 
-  // Redirect logged-in users from auth pages to dashboard
-  const authPaths = ['/login', '/signup']
-  const isAuthPath = authPaths.some(path =>
-    request.nextUrl.pathname === path
-  )
+  const isAuthPath = AUTH_PAGES.includes(pathname)
 
   if (isAuthPath && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = resolvePostAuthPath(
+      request.nextUrl.searchParams.get('next'),
+    )
+    url.search = ''
     return NextResponse.redirect(url)
   }
 

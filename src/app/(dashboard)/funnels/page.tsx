@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,15 +13,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, MoreHorizontal, Play, Pause, Copy, Trash2, GitBranch } from 'lucide-react'
+import { Plus, MoreHorizontal, Play, Pause, Copy, Trash2, GitBranch, Loader2 } from 'lucide-react'
 import { Funnel } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { EmptyState } from '@/components/ui/empty-state'
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  active: 'bg-green-100 text-green-800',
-  paused: 'bg-yellow-100 text-yellow-800',
+  draft: 'bg-zinc-500/15 text-zinc-300 ring-1 ring-inset ring-zinc-500/30',
+  active: 'bg-green-500/15 text-green-300 ring-1 ring-inset ring-green-500/30',
+  paused: 'bg-yellow-500/15 text-yellow-300 ring-1 ring-inset ring-yellow-500/30',
 }
 
 const triggerLabels: Record<string, string> = {
@@ -30,32 +31,53 @@ const triggerLabels: Record<string, string> = {
 }
 
 export default function FunnelsPage() {
+  const { loading: authLoading, user } = useAuth()
   const [funnels, setFunnels] = useState<Funnel[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const [error, setError] = useState<string | null>(null)
+  const [supabase] = useState(() => createClient())
 
   const fetchFunnels = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
 
-    const { data } = await supabase
+    if (!user) {
+      setFunnels([])
+      setError(null)
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    const { data, error } = await supabase
       .from('funnels')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
+    if (error) {
+      setFunnels([])
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
     if (data) {
       setFunnels(data)
     }
     setLoading(false)
-  }, [supabase])
+  }, [authLoading, supabase, user])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       void fetchFunnels()
     }, 0)
 
-    return () => clearTimeout(timer)
+    return () => window.clearTimeout(timeoutId)
   }, [fetchFunnels])
 
   const toggleFunnelStatus = async (funnel: Funnel) => {
@@ -68,7 +90,6 @@ export default function FunnelsPage() {
   }
 
   const duplicateFunnel = async (funnel: Funnel) => {
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     // Create duplicate funnel
@@ -125,98 +146,98 @@ export default function FunnelsPage() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="space-y-2">
-                <div className="h-5 w-32 bg-gray-200 rounded" />
-                <div className="h-4 w-24 bg-gray-100 rounded" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-4 w-full bg-gray-100 rounded" />
-              </CardContent>
-            </Card>
-          ))}
+      {authLoading || loading ? (
+        <div className="flex h-48 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
         </div>
-      ) : funnels.length === 0 ? (
+      ) : error ? (
         <EmptyState
           icon={GitBranch}
-          title="No funnels yet"
-          description="Automate subscriber engagement with DM funnels that send the right message at the right moment."
-          action={
-            <Link href="/funnels/new">
-              <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first funnel
-              </Button>
-            </Link>
-          }
+          title="Could not load funnels"
+          description={error}
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {funnels.map((funnel) => (
-            <Card key={funnel.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                <div>
-                  <Link href={`/funnels/${funnel.id}`}>
-                    <CardTitle className="text-base hover:text-pink-600 transition-colors">
-                      {funnel.name}
-                    </CardTitle>
-                  </Link>
-                  <Badge className={`mt-2 ${statusColors[funnel.status || 'draft']}`}>
-                    {funnel.status || 'draft'}
-                  </Badge>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => toggleFunnelStatus(funnel)}>
-                      {funnel.status === 'active' ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-2" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-2" />
-                          Activate
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => duplicateFunnel(funnel)}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => deleteFunnel(funnel.id)}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Trigger:</span>
-                    <span>{triggerLabels[funnel.trigger_type || ''] || 'Manual'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Created:</span>
-                    <span>{funnel.created_at ? formatDistanceToNow(new Date(funnel.created_at), { addSuffix: true }) : 'Unknown'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <>
+          {funnels.length === 0 ? (
+            <EmptyState
+              icon={GitBranch}
+              title="No funnels yet"
+              description="Automate subscriber engagement with DM funnels that send the right message at the right moment."
+              action={
+                <Link href="/funnels/new">
+                  <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create your first funnel
+                  </Button>
+                </Link>
+              }
+            />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {funnels.map((funnel) => (
+                <Card key={funnel.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div>
+                      <Link href={`/funnels/${funnel.id}`}>
+                        <CardTitle className="text-base hover:text-pink-600 transition-colors">
+                          {funnel.name}
+                        </CardTitle>
+                      </Link>
+                      <Badge className={`mt-2 ${statusColors[funnel.status || 'draft']}`}>
+                        {funnel.status || 'draft'}
+                      </Badge>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => toggleFunnelStatus(funnel)}>
+                          {funnel.status === 'active' ? (
+                            <>
+                              <Pause className="h-4 w-4 mr-2" />
+                              Pause
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-4 w-4 mr-2" />
+                              Activate
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateFunnel(funnel)}>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteFunnel(funnel.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Trigger:</span>
+                        <span>{triggerLabels[funnel.trigger_type || ''] || 'Manual'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Created:</span>
+                        <span>{funnel.created_at ? formatDistanceToNow(new Date(funnel.created_at), { addSuffix: true }) : 'Unknown'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

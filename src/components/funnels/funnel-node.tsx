@@ -50,7 +50,7 @@ export function FunnelNode({ step, index, onDelete, onEdit }: FunnelNodeProps) {
   return (
     <Card className="relative group cursor-pointer hover:shadow-md transition-shadow" onClick={onEdit}>
       <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <GripVertical className="h-4 w-4 text-gray-400" />
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">

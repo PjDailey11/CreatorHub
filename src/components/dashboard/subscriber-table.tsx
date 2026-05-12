@@ -30,20 +30,21 @@ interface SubscriberTableProps {
 }
 
 const tierColors: Record<string, string> = {
-  standard: 'bg-gray-100 text-gray-800',
-  premium: 'bg-blue-100 text-blue-800',
-  vip: 'bg-purple-100 text-purple-800',
+  standard: 'bg-zinc-500/15 text-zinc-300 ring-1 ring-inset ring-zinc-500/30',
+  premium: 'bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30',
+  vip: 'bg-purple-500/15 text-purple-300 ring-1 ring-inset ring-purple-500/30',
 }
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  churned: 'bg-red-100 text-red-800',
-  paused: 'bg-yellow-100 text-yellow-800',
+  active: 'bg-green-500/15 text-green-300 ring-1 ring-inset ring-green-500/30',
+  churned: 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-500/30',
+  paused: 'bg-yellow-500/15 text-yellow-300 ring-1 ring-inset ring-yellow-500/30',
 }
 
 export function SubscriberTable({ subscribers, loading, onEdit, onDelete }: SubscriberTableProps) {
   const [search, setSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<string | null>(null)
+  const hasFilters = search.trim().length > 0 || tierFilter !== null
 
   const filteredSubscribers = subscribers.filter((sub) => {
     const matchesSearch = sub.subscriber_name?.toLowerCase().includes(search.toLowerCase())
@@ -55,7 +56,7 @@ export function SubscriberTable({ subscribers, loading, onEdit, onDelete }: Subs
     return (
       <div className="space-y-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-12 bg-gray-100 animate-pulse rounded" />
+          <div key={i} className="h-12 animate-pulse rounded bg-muted" />
         ))}
       </div>
     )
@@ -65,7 +66,7 @@ export function SubscriberTable({ subscribers, loading, onEdit, onDelete }: Subs
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search subscribers..."
             value={search}
@@ -106,7 +107,9 @@ export function SubscriberTable({ subscribers, loading, onEdit, onDelete }: Subs
             {filteredSubscribers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No subscribers found
+                  {hasFilters
+                    ? 'No subscribers match your filters.'
+                    : 'Your data will appear here once connected.'}
                 </TableCell>
               </TableRow>
             ) : (

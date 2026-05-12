@@ -17,11 +17,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Plus } from 'lucide-react'
 import { Subscriber } from '@/types'
 
 export default function SubscribersPage() {
-  const { subscribers, stats, loading, addSubscriber, updateSubscriber, deleteSubscriber } = useSubscribers()
+  const {
+    subscribers,
+    stats,
+    loading,
+    error,
+    addSubscriber,
+    updateSubscriber,
+    deleteSubscriber,
+  } = useSubscribers()
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingSubscriber, setEditingSubscriber] = useState<Subscriber | null>(null)
@@ -174,6 +183,14 @@ export default function SubscribersPage() {
       </div>
 
       <StatsCards stats={stats} loading={loading} />
+
+      {error && (
+        <EmptyState
+          icon={Plus}
+          title="Could not load subscribers"
+          description={error}
+        />
+      )}
 
       <SubscriberTable
         subscribers={subscribers}

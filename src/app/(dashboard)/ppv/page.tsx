@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -78,22 +79,45 @@ function calculateRecommendedPrice(subscriber: Subscriber): PricingRecommendatio
 }
 
 export default function PPVPage() {
+  const { loading: authLoading, user } = useAuth()
   const [subscribers, setSubscribers] = useState<Subscriber[]>([])
   const [recommendations, setRecommendations] = useState<PricingRecommendation[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const [error, setError] = useState<string | null>(null)
+  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
     const fetchSubscribers = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (authLoading) {
+        setLoading(true)
+        return
+      }
 
-      const { data } = await supabase
+      if (!user) {
+        setSubscribers([])
+        setRecommendations([])
+        setError(null)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      const { data, error } = await supabase
         .from('subscribers')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('total_spent', { ascending: false })
+
+      if (error) {
+        setSubscribers([])
+        setRecommendations([])
+        setError(error.message)
+        setLoading(false)
+        return
+      }
 
       if (data) {
         setSubscribers(data)
@@ -102,8 +126,8 @@ export default function PPVPage() {
       setLoading(false)
     }
 
-    fetchSubscribers()
-  }, [supabase])
+    void fetchSubscribers()
+  }, [authLoading, supabase, user])
 
   const updateCustomPrice = (subscriberId: string, price: string) => {
     setRecommendations(recs =>
@@ -128,9 +152,27 @@ export default function PPVPage() {
   }
 
   const tierColors: Record<string, string> = {
-    standard: 'bg-gray-100 text-gray-800',
-    premium: 'bg-blue-100 text-blue-800',
-    vip: 'bg-purple-100 text-purple-800',
+    standard: 'bg-zinc-500/15 text-zinc-300 ring-1 ring-inset ring-zinc-500/30',
+    premium: 'bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30',
+    vip: 'bg-purple-500/15 text-purple-300 ring-1 ring-inset ring-purple-500/30',
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Sparkles className="h-6 w-6 animate-pulse text-pink-500" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={Sparkles}
+        title="Could not load PPV pricing"
+        description={error}
+      />
+    )
   }
 
   return (
@@ -143,7 +185,7 @@ export default function PPVPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Avg Recommended Price
             </CardTitle>
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
@@ -158,7 +200,7 @@ export default function PPVPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Potential Revenue
             </CardTitle>
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
@@ -173,7 +215,7 @@ export default function PPVPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Active Subscribers
             </CardTitle>
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
@@ -198,13 +240,7 @@ export default function PPVPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-100 animate-pulse rounded" />
-              ))}
-            </div>
-          ) : recommendations.length === 0 ? (
+          {recommendations.length === 0 ? (
             <EmptyState
               icon={Users}
               title="No active subscribers yet"
@@ -245,7 +281,7 @@ export default function PPVPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="h-2 w-16 overflow-hidden rounded-full bg-muted">
                             <div
                               className="h-full bg-gradient-to-r from-pink-500 to-purple-600"
                               style={{ width: `${rec.confidence}%` }}

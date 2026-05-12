@@ -1,23 +1,20 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/sidebar'
+import { getServerAuthSnapshot } from '@/lib/auth/server-auth'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { user } = await getServerAuthSnapshot()
 
   if (!user) {
     redirect('/login')
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-300">
+    <div className="min-h-screen bg-[var(--color-bg)] text-foreground">
       <Sidebar />
       <div className="lg:pl-64">
         <main className="px-4 py-6 pt-20 md:px-6 md:py-8 lg:pt-8">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ export default function EditFunnelPage() {
   const router = useRouter()
   const params = useParams()
   const funnelId = params.id as string
+  const { loading: authLoading, user } = useAuth()
 
   const [funnel, setFunnel] = useState<Funnel | null>(null)
   const [name, setName] = useState('')
@@ -27,15 +29,39 @@ export default function EditFunnelPage() {
   const [steps, setSteps] = useState<FunnelStepWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
+  const [error, setError] = useState<string | null>(null)
+  const [supabase] = useState(() => createClient())
 
   useEffect(() => {
     const fetchFunnel = async () => {
-      const { data: funnelData } = await supabase
+      if (authLoading) {
+        setLoading(true)
+        return
+      }
+
+      if (!user) {
+        setFunnel(null)
+        setError(null)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      const { data: funnelData, error: funnelError } = await supabase
         .from('funnels')
         .select('*')
         .eq('id', funnelId)
+        .eq('user_id', user.id)
         .single()
+
+      if (funnelError) {
+        setFunnel(null)
+        setError(funnelError.message)
+        setLoading(false)
+        return
+      }
 
       if (funnelData) {
         const funnel = funnelData as Funnel
@@ -44,11 +70,17 @@ export default function EditFunnelPage() {
         setTriggerType(funnel.trigger_type || 'dm_received')
         setStatus(funnel.status || 'draft')
 
-        const { data: stepsData } = await supabase
+        const { data: stepsData, error: stepsError } = await supabase
           .from('funnel_steps')
           .select('*')
           .eq('funnel_id', funnelId)
           .order('step_order', { ascending: true })
+
+        if (stepsError) {
+          setError(stepsError.message)
+          setLoading(false)
+          return
+        }
 
         if (stepsData) {
           setSteps(stepsData as FunnelStepWithDetails[])
@@ -57,8 +89,8 @@ export default function EditFunnelPage() {
       setLoading(false)
     }
 
-    fetchFunnel()
-  }, [funnelId, supabase])
+    void fetchFunnel()
+  }, [authLoading, funnelId, supabase, user])
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -77,6 +109,7 @@ export default function EditFunnelPage() {
         status,
       })
       .eq('id', funnelId)
+      .eq('user_id', user?.id ?? '')
 
     if (funnelError) {
       alert('Error updating funnel')
@@ -122,8 +155,27 @@ export default function EditFunnelPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-gray-200 animate-pulse rounded" />
-        <div className="h-64 bg-gray-100 animate-pulse rounded" />
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded bg-muted" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{error}</p>
+        <Link href="/funnels">
+          <Button variant="link">Go back to funnels</Button>
+        </Link>
       </div>
     )
   }
@@ -140,9 +192,9 @@ export default function EditFunnelPage() {
   }
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800',
-    active: 'bg-green-100 text-green-800',
-    paused: 'bg-yellow-100 text-yellow-800',
+    draft: 'bg-zinc-500/15 text-zinc-300 ring-1 ring-inset ring-zinc-500/30',
+    active: 'bg-green-500/15 text-green-300 ring-1 ring-inset ring-green-500/30',
+    paused: 'bg-yellow-500/15 text-yellow-300 ring-1 ring-inset ring-yellow-500/30',
   }
 
   return (

@@ -196,7 +196,7 @@ export function FunnelBuilder({ steps, onStepsChange }: FunnelBuilderProps) {
   return (
     <div className="space-y-6">
       {/* Trigger node */}
-      <Card className="border-2 border-dashed border-pink-200 bg-pink-50/50">
+      <Card className="border-2 border-dashed border-pink-500/20 bg-pink-500/5">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
@@ -214,7 +214,7 @@ export function FunnelBuilder({ steps, onStepsChange }: FunnelBuilderProps) {
       {steps.map((step, index) => (
         <div key={step.id} className="relative">
           <div className="absolute left-1/2 -translate-x-1/2 -top-3">
-            <ArrowDown className="h-6 w-6 text-gray-300" />
+            <ArrowDown className="h-6 w-6 text-border" />
           </div>
           <FunnelNode
             step={step}
@@ -229,7 +229,7 @@ export function FunnelBuilder({ steps, onStepsChange }: FunnelBuilderProps) {
       <div className="relative">
         {steps.length > 0 && (
           <div className="absolute left-1/2 -translate-x-1/2 -top-3">
-            <ArrowDown className="h-6 w-6 text-gray-300" />
+            <ArrowDown className="h-6 w-6 text-border" />
           </div>
         )}
         <Card className="border-2 border-dashed">

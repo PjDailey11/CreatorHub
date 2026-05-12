@@ -3,6 +3,8 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { CustomCursor } from "@/components/ui/custom-cursor";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/components/auth/auth-provider";
+import { getServerAuthSnapshot } from "@/lib/auth/server-auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,19 +17,28 @@ export const metadata: Metadata = {
     "The all-in-one platform to manage subscribers, automate DM funnels, optimize PPV pricing, and track your content performance.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialAuth = await getServerAuthSnapshot();
+
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html
+      lang="en"
+      className="dark scroll-smooth"
+      data-theme="dark"
+      suppressHydrationWarning
+    >
       <body
-        className={`${geistSans.variable} font-sans antialiased bg-zinc-950 text-zinc-300`}
+        className={`${geistSans.variable} bg-background text-foreground font-sans antialiased`}
       >
-        <CustomCursor />
-        {children}
-        <Toaster richColors closeButton position="top-right" theme="dark" />
+        <AuthProvider initialAuth={initialAuth}>
+          <CustomCursor />
+          {children}
+          <Toaster richColors closeButton position="top-right" theme="dark" />
+        </AuthProvider>
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 
 export function AuthNavActions() {
-  const { user, loading, signOut } = useAuth()
+  const { isAuthenticated, loading, signOut } = useAuth()
 
   if (loading) {
     return (
@@ -17,7 +17,7 @@ export function AuthNavActions() {
     )
   }
 
-  if (user) {
+  if (isAuthenticated) {
     return (
       <div className="flex items-center gap-3">
         <Link href="/dashboard">

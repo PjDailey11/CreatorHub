@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Sparkles } from 'lucide-react'
 
 export function MarketingHeader() {
-  const { user, loading } = useAuth()
+  const { isAuthenticated, loading } = useAuth()
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
@@ -59,7 +59,7 @@ export function MarketingHeader() {
                 />
                 <span className="sr-only">Loading account</span>
               </>
-            ) : user ? (
+            ) : isAuthenticated ? (
               <>
                 <Link href="/dashboard">
                   <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all">

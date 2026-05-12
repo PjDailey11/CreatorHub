@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Camera,
   Crown,
@@ -85,8 +86,17 @@ function tierMeta(tier: string | null | undefined) {
 const BIO_MAX = 500
 
 export default function ProfilePage() {
-  const { user, profile, loading } = useAuth()
-  const supabase = createClient()
+  const {
+    avatarUrl,
+    email,
+    fullName: authFullName,
+    initials,
+    loading,
+    profile,
+    refreshProfile,
+    user,
+  } = useAuth()
+  const [supabase] = useState(() => createClient())
 
   const [fullName, setFullName] = useState('')
   const [onlyfansUsername, setOnlyfansUsername] = useState('')
@@ -105,31 +115,18 @@ export default function ProfilePage() {
 
   // Hydrate form values whenever the profile loads/changes.
   useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name ?? '')
-      setOnlyfansUsername(profile.onlyfans_username ?? '')
-    }
-  }, [profile])
+    const timeoutId = window.setTimeout(() => {
+      setFullName(profile?.full_name ?? authFullName ?? '')
+      setOnlyfansUsername(profile?.onlyfans_username ?? '')
+    }, 0)
 
-  const email = profile?.email || user?.email || ''
+    return () => window.clearTimeout(timeoutId)
+  }, [authFullName, profile])
+
   const tier = tierMeta(profile?.subscription_tier)
-  const initial = (profile?.full_name?.charAt(0) ||
-    email.charAt(0) ||
-    'U'
-  ).toUpperCase()
 
   const memberSince = profile?.created_at
     ? format(new Date(profile.created_at), 'MMMM yyyy')
-    : '—'
-
-  // Mock next billing date: 30 days from member-since for demo purposes.
-  const nextBillingDate = profile?.created_at
-    ? format(
-        new Date(
-          new Date(profile.created_at).getTime() + 30 * 24 * 60 * 60 * 1000
-        ),
-        'MMM d, yyyy'
-      )
     : '—'
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -139,12 +136,15 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
+          email,
           full_name: fullName.trim() || null,
           onlyfans_username: onlyfansUsername.trim() || null,
+          subscription_tier: profile?.subscription_tier ?? 'free',
         })
-        .eq('id', user.id)
       if (error) throw error
+      await refreshProfile()
       toast.success('Profile saved')
     } catch (err) {
       const message =
@@ -217,6 +217,29 @@ export default function ProfilePage() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in...
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title="Profile still syncing"
+        description="Your account is signed in, but the profile record has not finished loading yet. Retry once the auth sync completes."
+        action={
+          <Button onClick={() => void refreshProfile()}>
+            Retry profile sync
+          </Button>
+        }
+      />
+    )
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="mb-6">
@@ -233,8 +256,9 @@ export default function ProfilePage() {
             <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
               <div className="relative">
                 <Avatar className="h-24 w-24">
+                  <AvatarImage src={avatarUrl ?? undefined} alt={email || 'Profile avatar'} />
                   <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-3xl font-semibold text-white">
-                    {initial}
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -333,7 +357,7 @@ export default function ProfilePage() {
                     <Label htmlFor="email_readonly">Email</Label>
                     <Input
                       id="email_readonly"
-                      value={email}
+                      value={email ?? ''}
                       readOnly
                       disabled
                       className="cursor-not-allowed opacity-80"
@@ -467,7 +491,7 @@ export default function ProfilePage() {
               <CardContent>
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white ring-1 ring-border">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card">
                       <GoogleIcon className="h-5 w-5" />
                     </div>
                     <div>
@@ -547,7 +571,7 @@ export default function ProfilePage() {
                         onChange={(e) =>
                           setDeleteConfirmEmail(e.target.value)
                         }
-                        placeholder={email}
+                        placeholder={email ?? undefined}
                         autoComplete="off"
                       />
                     </div>
@@ -604,12 +628,10 @@ export default function ProfilePage() {
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
                       Next billing date
                     </p>
-                    <p className="mt-1 text-base font-semibold">
-                      {profile?.subscription_tier &&
-                      profile.subscription_tier !== 'free'
-                        ? nextBillingDate
-                        : '—'}
-                    </p>
+                    <div className="mt-1">
+                      <p className="text-base font-semibold">—</p>
+                      <p className="text-xs text-muted-foreground">No data yet</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>

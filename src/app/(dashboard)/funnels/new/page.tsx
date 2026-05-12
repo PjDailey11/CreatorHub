@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,17 +11,18 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FunnelBuilder } from '@/components/funnels/funnel-builder'
 import { FunnelPreview } from '@/components/funnels/funnel-preview'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { FunnelStepWithDetails } from '@/types'
 
 export default function NewFunnelPage() {
   const router = useRouter()
+  const { loading: authLoading, user } = useAuth()
   const [name, setName] = useState('')
   const [triggerType, setTriggerType] = useState('dm_received')
   const [steps, setSteps] = useState<FunnelStepWithDetails[]>([])
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -29,7 +31,6 @@ export default function NewFunnelPage() {
     }
 
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       setSaving(false)
       return
@@ -74,6 +75,22 @@ export default function NewFunnelPage() {
     }
 
     router.push('/funnels')
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in...
+      </div>
+    )
   }
 
   return (

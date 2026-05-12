@@ -46,8 +46,8 @@ export function FunnelPreview({ name, triggerType, steps }: FunnelPreviewProps) 
           <div className="space-y-4">
             {/* Trigger */}
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
-                <ArrowRight className="h-4 w-4 text-pink-600" />
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-pink-500/15">
+                <ArrowRight className="h-4 w-4 text-pink-400" />
               </div>
               <div>
                 <p className="text-sm font-medium">Trigger</p>
@@ -62,9 +62,9 @@ export function FunnelPreview({ name, triggerType, steps }: FunnelPreviewProps) 
               return (
                 <div key={step.id} className="flex items-start gap-3">
                   <div className="flex flex-col items-center">
-                    <div className="h-0.5 w-0.5 bg-gray-300 h-4" />
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <Icon className="h-4 w-4 text-gray-600" />
+                    <div className="h-4 w-px bg-border" />
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="pt-4">

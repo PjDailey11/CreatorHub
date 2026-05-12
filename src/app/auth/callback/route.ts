@@ -1,19 +1,22 @@
-import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
+import { syncProfileFromUser } from '@/lib/auth/server-auth'
 import {
   getRequestAppOrigin,
-  sanitizeNextPath,
+  resolvePostAuthPath,
 } from '@/lib/auth/urls'
-import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const requestOrigin = getRequestAppOrigin(request)
   const code = requestUrl.searchParams.get('code')
-  const next = sanitizeNextPath(requestUrl.searchParams.get('next'))
+  const next = resolvePostAuthPath(requestUrl.searchParams.get('next'))
 
-  // Surface OAuth provider errors that come back as ?error=...&error_description=...
   const oauthError = requestUrl.searchParams.get('error')
-  const oauthErrorDescription = requestUrl.searchParams.get('error_description')
+  const oauthErrorDescription = requestUrl.searchParams.get(
+    'error_description',
+  )
+
   if (oauthError) {
     console.log('[v0] auth callback received provider error:', {
       error: oauthError,
@@ -22,8 +25,12 @@ export async function GET(request: Request) {
 
     const loginUrl = new URL('/login', requestOrigin)
     loginUrl.searchParams.set('error', oauthError)
+
     if (oauthErrorDescription) {
-      loginUrl.searchParams.set('error_description', oauthErrorDescription)
+      loginUrl.searchParams.set(
+        'error_description',
+        oauthErrorDescription,
+      )
     }
 
     return NextResponse.redirect(loginUrl)
@@ -34,6 +41,14 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        await syncProfileFromUser(user, supabase)
+      }
+
       return NextResponse.redirect(new URL(next, requestOrigin))
     }
 
@@ -51,6 +66,7 @@ export async function GET(request: Request) {
   }
 
   console.log('[v0] auth callback hit with neither code nor provider error')
+
   const loginUrl = new URL('/login', requestOrigin)
   loginUrl.searchParams.set('error', 'auth_callback_error')
   loginUrl.searchParams.set(

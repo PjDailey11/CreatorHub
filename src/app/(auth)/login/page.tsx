@@ -18,7 +18,10 @@ import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { buildAuthCallbackUrl } from '@/lib/auth/urls'
+import {
+  buildAuthCallbackUrl,
+  resolvePostAuthPath,
+} from '@/lib/auth/urls'
 
 type Mode = 'password' | 'magic'
 
@@ -35,6 +38,7 @@ function LoginPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const nextPath = resolvePostAuthPath(searchParams.get('next'))
 
   const [mode, setMode] = useState<Mode>('password')
   const [showPassword, setShowPassword] = useState(false)
@@ -122,7 +126,7 @@ function LoginPageInner() {
       return
     }
 
-    router.push('/dashboard')
+    router.replace(nextPath)
     router.refresh()
   }
 
@@ -133,7 +137,7 @@ function LoginPageInner() {
       type: 'signup',
       email: unconfirmedEmail,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(),
+        emailRedirectTo: buildAuthCallbackUrl({ next: nextPath }),
       },
     })
     if (error) {
@@ -163,7 +167,7 @@ function LoginPageInner() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(),
+        emailRedirectTo: buildAuthCallbackUrl({ next: nextPath }),
       },
     })
 
@@ -194,7 +198,7 @@ function LoginPageInner() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: buildAuthCallbackUrl(),
+        redirectTo: buildAuthCallbackUrl({ next: nextPath }),
       },
     })
 

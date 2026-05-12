@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, User, Settings, LogOut } from 'lucide-react'
+import { House, LayoutDashboard, User, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type UserMenuProps = {
@@ -28,15 +28,18 @@ export function UserMenu({
   align = 'end',
   side = 'bottom',
 }: UserMenuProps) {
-  const { user, profile, signOut } = useAuth()
+  const {
+    avatarUrl,
+    displayName,
+    email,
+    initials,
+    isAuthenticated,
+    signOut,
+  } = useAuth()
 
-  const displayName = profile?.full_name || user?.email || 'User'
-  const email = profile?.email || user?.email || ''
-  const initial = (profile?.full_name?.charAt(0) ||
-    profile?.email?.charAt(0) ||
-    user?.email?.charAt(0) ||
-    'U'
-  ).toUpperCase()
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
     <DropdownMenu>
@@ -50,8 +53,9 @@ export function UserMenu({
             )}
           >
             <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
               <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white font-semibold">
-                {initial}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -72,8 +76,9 @@ export function UserMenu({
             aria-label="Account menu"
           >
             <Avatar className="h-9 w-9">
+              <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
               <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white font-semibold">
-                {initial}
+                {initials}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -91,6 +96,12 @@ export function UserMenu({
           <p className="text-xs text-muted-foreground truncate">{email}</p>
         </div>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/" className="cursor-pointer">
+            <House className="h-4 w-4" />
+            Back to home
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard" className="cursor-pointer">
             <LayoutDashboard className="h-4 w-4" />

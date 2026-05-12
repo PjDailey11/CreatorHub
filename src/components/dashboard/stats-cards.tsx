@@ -7,9 +7,14 @@ import { SubscriberStats } from '@/types'
 interface StatsCardsProps {
   stats: SubscriberStats | null
   loading?: boolean
+  showEmptyState?: boolean
 }
 
-export function StatsCards({ stats, loading }: StatsCardsProps) {
+export function StatsCards({
+  stats,
+  loading,
+  showEmptyState = false,
+}: StatsCardsProps) {
   const cards = [
     {
       title: 'Total Subscribers',
@@ -50,7 +55,7 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
       {cards.map((card) => (
         <Card key={card.title} className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {card.title}
             </CardTitle>
             <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center`}>
@@ -59,7 +64,12 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
+              <div className="h-8 w-24 animate-pulse rounded bg-muted" />
+            ) : showEmptyState ? (
+              <>
+                <div className="text-2xl font-bold">—</div>
+                <p className="text-xs text-muted-foreground">No data yet</p>
+              </>
             ) : (
               <>
                 <div className="text-2xl font-bold">{card.format(card.value)}</div>

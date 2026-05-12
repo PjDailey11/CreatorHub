@@ -11,16 +11,25 @@ import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/hooks/use-auth'
 import { Check, CreditCard, User, Bell, Shield, Loader2 } from 'lucide-react'
 import { PRICING_PLANS } from '@/lib/pricing'
+import { EmptyState } from '@/components/ui/empty-state'
 import Link from 'next/link'
 
 export default function SettingsPage() {
-  const { user, profile, signOut } = useAuth()
+  const {
+    email,
+    fullName: authFullName,
+    loading,
+    profile,
+    refreshProfile,
+    signOut,
+    user,
+  } = useAuth()
   const [fullName, setFullName] = useState('')
   const [onlyfansUsername, setOnlyfansUsername] = useState('')
   const [saving, setSaving] = useState(false)
   const [loadingPortal, setLoadingPortal] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   const handleManageSubscription = async () => {
     setLoadingPortal(true)
@@ -41,13 +50,13 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    if (profile) {
-      setTimeout(() => {
-        setFullName(profile.full_name || '')
-        setOnlyfansUsername(profile.onlyfans_username || '')
-      }, 0)
-    }
-  }, [profile])
+    const timeoutId = window.setTimeout(() => {
+      setFullName(profile?.full_name ?? authFullName ?? '')
+      setOnlyfansUsername(profile?.onlyfans_username ?? '')
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [authFullName, profile])
 
   const handleSave = async () => {
     if (!user) return
@@ -56,18 +65,52 @@ export default function SettingsPage() {
 
     const { error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: user.id,
+        email,
         full_name: fullName,
         onlyfans_username: onlyfansUsername,
+        subscription_tier: profile?.subscription_tier ?? 'free',
       })
-      .eq('id', user.id)
 
     if (error) {
       setMessage({ type: 'error', text: 'Failed to update profile' })
     } else {
+      await refreshProfile()
       setMessage({ type: 'success', text: 'Profile updated successfully' })
     }
     setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in...
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <EmptyState
+        icon={User}
+        title="Profile still syncing"
+        description="We confirmed your account, but your profile row is not available yet. Try refreshing your profile data in a moment."
+        action={
+          <Button onClick={() => void refreshProfile()}>
+            Retry profile sync
+          </Button>
+        }
+      />
+    )
   }
 
   const currentPlan = profile?.subscription_tier || 'free'
@@ -93,7 +136,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user?.email || ''} disabled className="bg-gray-50" />
+              <Input id="email" value={email || ''} disabled className="bg-muted/50" />
               <p className="text-xs text-muted-foreground">Email cannot be changed</p>
             </div>
             <div className="space-y-2">
@@ -141,7 +184,7 @@ export default function SettingsPage() {
             <CardDescription>Manage your subscription plan</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-pink-50 to-purple-50">
+            <div className="flex items-center justify-between rounded-lg border border-pink-500/15 bg-gradient-to-r from-pink-500/10 via-pink-500/5 to-purple-500/10 p-4">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">

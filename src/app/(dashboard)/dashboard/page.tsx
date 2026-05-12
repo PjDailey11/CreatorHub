@@ -6,13 +6,15 @@ import { RevenueTrend } from '@/components/dashboard/revenue-trend'
 import { SubscriberTable } from '@/components/dashboard/subscriber-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Plus, TrendingUp, Zap, Target } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
-  const { subscribers, stats, loading } = useSubscribers()
+  const { subscribers, stats, loading, error } = useSubscribers()
 
   const recentSubscribers = subscribers.slice(0, 5)
+  const showConnectBanner = !loading && !error && subscribers.length === 0
 
   return (
     <div className="space-y-6">
@@ -29,7 +31,38 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <StatsCards stats={stats} loading={loading} />
+      {showConnectBanner && (
+        <Card className="border-pink-500/20 bg-gradient-to-r from-pink-500/10 via-pink-500/5 to-purple-500/10">
+          <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">
+                Connect your account to start seeing real data
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Dashboard metrics and charts will populate once your account is connected.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="shrink-0 border-pink-500/30 bg-background/60"
+            >
+              Connect account
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <StatsCards stats={stats} loading={loading} showEmptyState />
+
+      {error && (
+        <EmptyState
+          icon={TrendingUp}
+          title="Could not load dashboard data"
+          description={error}
+        />
+      )}
 
       <RevenueTrend />
 
@@ -81,13 +114,13 @@ export default function DashboardPage() {
               <CardTitle className="text-lg">Growth Tips</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="p-3 rounded-lg bg-gradient-to-r from-pink-50 to-purple-50">
+              <div className="rounded-lg border border-pink-500/15 bg-gradient-to-r from-pink-500/10 via-pink-500/5 to-purple-500/10 p-3">
                 <p className="text-sm font-medium">Boost Engagement</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Set up automated welcome DMs to greet new subscribers
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="rounded-lg border border-cyan-500/15 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-cyan-500/10 p-3">
                 <p className="text-sm font-medium">Optimize PPV</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Use AI pricing to maximize your PPV revenue
