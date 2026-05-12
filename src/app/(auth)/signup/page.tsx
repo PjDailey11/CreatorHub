@@ -17,6 +17,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { buildAuthCallbackUrl } from '@/lib/auth/urls'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: buildAuthCallbackUrl(),
         data: { full_name: fullName },
       },
     })
@@ -130,7 +131,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: buildAuthCallbackUrl(),
       },
     })
 

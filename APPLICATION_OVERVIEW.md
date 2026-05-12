@@ -45,7 +45,8 @@ Key folders:
 
 Key backend routes:
 
-- `src/app/api/auth/callback/route.ts`
+- `src/app/auth/callback/route.ts`
+- `src/app/api/auth/callback/route.ts` (legacy redirect shim)
 - `src/app/api/stripe/checkout/route.ts`
 - `src/app/api/stripe/portal/route.ts`
 - `src/app/api/stripe/webhook/route.ts`
@@ -81,6 +82,8 @@ Server-side session management:
 - `src/lib/supabase/middleware.ts` updates auth session state
 - `src/proxy.ts` is the Next.js 16 runtime entrypoint for request/session middleware
 - `src/lib/supabase/server.ts` creates server and admin clients
+- `/auth/callback` is the visible callback route for email and Google OAuth flows
+- `AUTH_OAUTH_SETUP.md` contains the production auth setup checklist
 
 ## 6) Billing and Stripe Flow
 

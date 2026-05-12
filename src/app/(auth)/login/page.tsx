@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { buildAuthCallbackUrl } from '@/lib/auth/urls'
 
 type Mode = 'password' | 'magic'
 
@@ -27,7 +28,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   oauth_provider_not_configured:
     'Google sign-in isn\u2019t enabled yet. Use email + password below or contact the site owner.',
   oauth_redirect_uri_mismatch:
-    'This preview URL isn\u2019t in the Supabase allowed redirect list. Add it under Authentication \u2192 URL Configuration.',
+    'This URL isn\u2019t in the Supabase allowed redirect list. Add your /auth/callback URL under Authentication \u2192 URL Configuration.',
 }
 
 function LoginPageInner() {
@@ -132,7 +133,7 @@ function LoginPageInner() {
       type: 'signup',
       email: unconfirmedEmail,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: buildAuthCallbackUrl(),
       },
     })
     if (error) {
@@ -162,7 +163,7 @@ function LoginPageInner() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: buildAuthCallbackUrl(),
       },
     })
 
@@ -193,7 +194,7 @@ function LoginPageInner() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: buildAuthCallbackUrl(),
       },
     })
 

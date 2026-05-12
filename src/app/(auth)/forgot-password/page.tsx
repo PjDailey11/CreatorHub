@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import Link from 'next/link'
+import { buildAuthCallbackUrl } from '@/lib/auth/urls'
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
@@ -30,7 +31,7 @@ export default function ForgotPasswordPage() {
     setMessage(null)
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
+      redirectTo: buildAuthCallbackUrl({ next: '/reset-password' }),
     })
 
     if (error) {
